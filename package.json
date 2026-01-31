@@ -1,0 +1,39 @@
+{
+  "name": "mcp_coingecko_price_ts",
+  "version": "1.0.5",
+  "type": "module",
+  "bin": {
+    "mcp_coingecko_price_ts": "./dist/index.js"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "MNunes",
+  "license": "ISC",
+  "description": "A simple Model Context Protocol (MCP) server that provides cryptocurrency pricing information using the CoinGecko API.",
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.25.0",
+    "@types/express": "^5.0.6",
+    "express": "^5.2.1",
+    "zod": "^4.3.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcosnunesmbs/mcp_coingecko_price_ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marcosnunesmbs/mcp_coingecko_price_ts/issues"
+  },
+  "homepage": "https://github.com/marcosnunesmbs/mcp_coingecko_price_ts#readme"
+}
