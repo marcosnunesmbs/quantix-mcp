@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'; // Example for Express
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import express, { type Request, type Response } from 'express';
+import { config } from './config.js';
+import { z } from 'zod';
+import { registerCategoryTools } from './tools/categories.js';
+import { registerCreditCardTools } from './tools/credit-cards.js';
+import { registerTransactionTools } from './tools/transactions.js';
+import { registerSummaryTools } from './tools/summary.js';
 
-import * as z from 'zod/v4';
-
-function getServer() {
+export function getServer() {
     const mcpServer = new McpServer({
         name: 'quantix_mcp_server',
         version: '1.0.0'
@@ -14,28 +18,12 @@ function getServer() {
 
     console.log('McpServer started');
 
-    mcpServer.registerTool(
-        'get_crypto_price',
-        {
-            title: 'Get Cryptocurrency Price',
-            description: 'Get the current price of a cryptocurrency from CoinGecko.',
-            inputSchema: {
-                crypto_id: z.string(),
-                currency: z.string()
-            }
-        },
-        async ({ crypto_id, currency }) => {
-            const response = await fetch(
-                `https://api.coingecko.com/api/v3/simple/price?ids=${crypto_id}&vs_currencies=${currency}`
-            );
-            const data = await response.json();
-            const price = data[crypto_id][currency];
-            const output = `The current price of ${crypto_id} in ${currency} is ${price}`;
-            return {
-                content: [{ type: 'text', text: output }],
-            };
-        }
-    );
+    // Register Tools here
+    registerCategoryTools(mcpServer);
+    registerCreditCardTools(mcpServer);
+    registerTransactionTools(mcpServer);
+    registerSummaryTools(mcpServer);
+
     return mcpServer;
 }
 
@@ -43,13 +31,11 @@ const app = express();
 app.use(express.json());
 
 app.post('/mcp', async (req: Request, res: Response) => {
-
     const mcpServer = getServer();
 
     const transport = new StreamableHTTPServerTransport({
     });
     const mcpTransport = transport as unknown as Transport;
-
 
     res.on('close', () => {
         transport.close();
@@ -57,11 +43,14 @@ app.post('/mcp', async (req: Request, res: Response) => {
     });
 
     await mcpServer.connect(mcpTransport);
-
     await transport.handleRequest(req, res, req.body);
 });
 
-const MCPPORT = process.env.MCPPORT || 3001;
-app.listen(MCPPORT, () => {
-    console.log(`MCP server is running on http://localhost:${MCPPORT}/mcp`);
-});
+if (config.NODE_ENV !== 'test') {
+    const MCPPORT = config.MCPPORT;
+    app.listen(MCPPORT, () => {
+        console.log(`MCP server is running on http://localhost:${MCPPORT}/mcp`);
+    });
+}
+
+export { app };

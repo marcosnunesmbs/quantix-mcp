@@ -1,50 +1,58 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+SYNC IMPACT REPORT
+Version Change: 0.0.0 (New) -> 1.0.0
+Modified Principles: All (Initial Definition)
+Added Sections: All
+Removed Sections: None
+Templates Requiring Updates: ✅ None (Templates are generic enough)
+Follow-up:
+- Verify ratification date is acceptable as today.
+-->
+# Morpheus MCP Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Library-First
+Every feature or tool set should be implemented as a standalone module or library within the `src/tools/` or `src/lib/` structure. Avoid monolithic `index.ts` files. Modules must be self-contained, independently testable, and have a single clear responsibility.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Standard Interface
+All tools must expose functionality via the Model Context Protocol (MCP) standard. Inputs must be strictly defined using Zod schemas to ensure type safety and validation at the boundary.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Test-First (NON-NEGOTIABLE)
+Test-Driven Development (TDD) is mandatory for core logic. Write tests that define the expected behavior before implementing the functionality. Ensure a Red-Green-Refactor cycle.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Integration Testing
+Given the nature of MCP servers as API proxies, integration tests are critical. Usage of mocking frameworks to simulate external API responses is required to verify contract adherence without flakiness from external services.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Simplicity & Robustness
+Keep code simple and readable. Avoid over-engineering. Handle errors gracefully and provide meaningful error messages to the LLM/Client. Strict typing is required throughout to prevent runtime surprises.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Security & Compliance
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### Authentication Management
+API keys and secrets must never be hardcoded. They must be loaded from environment variables (e.g., `QUANTIX_API_KEY`). The server should validate the presence of required configuration at startup.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### Data Privacy
+Do not log sensitive user data or full API keys. Logs should be structured and sanitized.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Development Workflow
+
+### Code Review Gates
+All Pull Requests must pass the automated build and test suite. Code reviews should verify adherence to the Library-First and Test-First principles.
+
+### Documentation
+Every tool must have a clear description and argument documentation suitable for LLM consumption. `README.md` must be kept up-to-date with usage instructions.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution serves as the primary source of truth for engineering practices within the Morpheus MCP project.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### Amendments
+Any changes to this constitution must be made via a Pull Request to `.specify/memory/constitution.md`.
+*   Major changes (altering core principles) require a Consensus Review.
+*   Minor changes (clarifications, new sections) require standard Maintainer Review.
+
+### Compliance
+All new feature plans (Phase 0/1) must include a "Constitution Check" to verify alignment with these principles.
+
+**Version**: 1.0.0 | **Ratified**: 2026-01-31 | **Last Amended**: 2026-01-31
