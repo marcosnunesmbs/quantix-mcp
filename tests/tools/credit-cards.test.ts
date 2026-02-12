@@ -77,10 +77,13 @@ describe('Credit Card Tools', () => {
       const handler = registeredTools['pay_statement'];
       (apiClient.post as any).mockResolvedValue({});
 
-      await handler({ cardId: 'cc_1', month: '2026-03' });
+      await handler({ cardId: 'cc_1', month: '2026-03', paymentAccountId: 'acc_1' });
 
-      // Note: Assuming endpoint matches spec: /credit-cards/{id}/pay-statement?month=...
-      expect(apiClient.post).toHaveBeenCalledWith('/credit-cards/cc_1/pay-statement?month=2026-03', {}); 
+      // Note: Assuming endpoint matches spec: /credit-cards/{id}/pay-statement
+      expect(apiClient.post).toHaveBeenCalledWith('/credit-cards/cc_1/pay-statement', { 
+        month: '2026-03',
+        paymentAccountId: 'acc_1'
+      }); 
     });
   });
 });

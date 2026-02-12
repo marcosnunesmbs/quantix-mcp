@@ -1,9 +1,9 @@
 {
-  "name": "quantix-mcp-server",
+  "name": "quantix-mcp",
   "version": "1.0.0",
   "type": "module",
   "bin": {
-    "quantix-mcp-server": "./dist/index.js"
+    "quantix-mcp": "./dist/index.js"
   },
   "main": "dist/index.js",
   "scripts": {
@@ -15,7 +15,7 @@
   "keywords": [],
   "author": "MNunes",
   "license": "ISC",
-  "description": "A simple Model Context Protocol (MCP) server that provides cryptocurrency pricing information using the CoinGecko API.",
+  "description": "A simple Model Context Protocol (MCP) server that provides functionalities for financial data management using the Quantix API.",
   "devDependencies": {
     "@types/node": "^25.0.10",
     "ts-node": "^10.9.2",
@@ -32,10 +32,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/marcosnunesmbs/mcp_coingecko_price_ts.git"
+    "url": "git+https://github.com/marcosnunesmbs/quantix-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/marcosnunesmbs/mcp_coingecko_price_ts/issues"
+    "url": "https://github.com/marcosnunesmbs/quantix-mcp/issues"
   },
-  "homepage": "https://github.com/marcosnunesmbs/mcp_coingecko_price_ts#readme"
+  "homepage": "https://github.com/marcosnunesmbs/quantix-mcp#readme"
 }

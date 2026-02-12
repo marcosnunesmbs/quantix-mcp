@@ -1,18 +1,22 @@
-# CoinGecko Price MCP Server
 
-A simple Model Context Protocol (MCP) server that provides cryptocurrency pricing information using the CoinGecko API.
+# Quantix Personal Finance MCP Server
+
+MCP (Model Context Protocol) server for the Quantix Personal Finance API. Exposes all endpoints for categories, credit cards, transactions, and summaries as MCP tools, with full input validation and modular architecture.
 
 ## Features
 
-- **get_crypto_price**: A tool to fetch the current price of a cryptocurrency in a specific currency.
-  - Inputs:
-    - `crypto_id`: The CoinGecko ID of the cryptocurrency (e.g., 'bitcoin', 'ethereum').
-    - `currency`: The target currency for the price (e.g., 'usd', 'brl').
+- **Categories**: Create, list, and delete financial categories
+- **Credit Cards**: Create, list, get statements, and pay statements
+- **Transactions**: Create, list, pay, and delete transactions
+- **Summary**: Get monthly financial summary
+
+All tool inputs are validated using [Zod](https://zod.dev/) schemas matching the OpenAPI spec.
 
 ## Prerequisites
 
-- Node.js (v18 or higher recommended)
+- Node.js (v18 or higher)
 - npm
+- Access to Quantix API and API Key
 
 ## Installation
 
@@ -22,6 +26,16 @@ A simple Model Context Protocol (MCP) server that provides cryptocurrency pricin
    ```bash
    npm install
    ```
+
+## Configuration
+
+Create a `.env` file in the project root:
+
+```env
+QUANTIX_API_URL=https://api.quantix.example.com
+QUANTIX_API_KEY=your_api_key_here
+MCPPORT=3001
+```
 
 ## Building the Project
 
@@ -35,72 +49,90 @@ The compiled output will be in the `dist` directory.
 
 ## Usage
 
-### Testing Locally with MCP Inspector (The `npx` Way)
+### Development
 
-You can test the server interactively using the MCP Inspector. This allows you to inspect tools and resources and make tool calls directly.
-
-1. Build the project first:
-   ```bash
-   npm run build
-   ```
-
-2. Run the inspector using `npx`, pointing it to your built server script:
-
-   ```bash
-   npx @modelcontextprotocol/inspector node dist/index.js
-   ```
-
-   _Note: On Windows, use a full path or ensuring valid path syntax if you encounter issues._
-
-3. Open the URL provided in the terminal (usually `http://localhost:5173`) to interact with your server.
-
-### Running Directly
-
-You can run the server directly (it communicates via Stdio), but it is designed to be used by an MCP client (like Claude Desktop or the Inspector).
-
-```bash
-npm start
-```
-
-### Developing
-
-To run the server in development mode (using `tsx`):
+Run the server in development mode (with hot reload):
 
 ```bash
 npm run dev
 ```
 
-## Setup with Claude Desktop
+### Production
 
-To use this server with Claude Desktop apps:
+```bash
+npm start
+```
+
+### MCP Inspector (Recommended for Testing)
+
+1. Build the project:
+   ```bash
+   npm run build
+   ```
+2. Run the inspector:
+   ```bash
+   npx @modelcontextprotocol/inspector node dist/index.js
+   ```
+3. Open the provided URL to interact with your server.
+
+## Exposed MCP Tools
+
+| Tool Name           | Description                                      |
+|---------------------|--------------------------------------------------|
+| create_category     | Create a new financial category                  |
+| get_categories      | List all categories                              |
+| delete_category     | Delete a category by ID                          |
+| create_credit_card  | Create a new credit card                         |
+| get_credit_cards    | List all credit cards                            |
+| get_statement       | Get credit card statement for a specific month   |
+| pay_statement       | Mark all transactions in a statement as paid     |
+| create_transaction  | Record a new income or expense                   |
+| get_transactions    | List transactions for a specific month           |
+| pay_transaction     | Mark a transaction as paid/received              |
+| delete_transaction  | Delete a transaction by ID                       |
+| get_summary         | Get monthly financial summary                    |
+
+See the OpenAPI spec in `specs/001-mcp-api-integration/contracts/openapi.yaml` for detailed schemas.
+
+## Setup with Claude Desktop
 
 1. Locate your Claude Desktop configuration file:
    - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
    - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-
 2. Add the server configuration:
 
    ```json
    {
      "mcpServers": {
-       "coingecko_price": {
+       "quantix": {
          "command": "node",
-         "args": ["/absolute/path/to/mcp_coingecko_price_ts/dist/index.js"]
+         "args": ["/absolute/path/to/dist/index.js"],
+         "env": {
+           "QUANTIX_API_URL": "https://api.quantix.example.com",
+           "QUANTIX_API_KEY": "your_api_key_here"
+         }
        }
      }
    }
    ```
-   *Remember to run `npm run build` after making changes to the source code.*
 
-3. You can run this mcp with stdio transport using npx command
+## Testing
 
-    ```json
-    {
-     "mcpServers": {
-       "coingecko_price": {
-         "command": "npx",
-         "args": ["-y", "mcp_coingecko_price_ts"]
-       }
-     }
-   }
-    ```
+Run all tests:
+
+```bash
+npm test
+```
+
+## License
+
+ISC
+
+## Prerequisites
+
+- Node.js (v18 or higher recommended)
+- npm
+
+## Installation
+
+1. Clone or navigate to the project repository.

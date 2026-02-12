@@ -110,6 +110,10 @@ components:
           type: string
           description: ID of the associated recurrence rule
           example: "rr_123456789"
+        accountId:
+          type: string
+          description: ID of the associated account (required if paymentMethod is not CREDIT)
+          example: "acc_123456789"
         paid:
           type: boolean
           default: false
@@ -234,6 +238,66 @@ components:
           description: Available credit limit
           example: 1550.00
 
+    Account:
+      type: object
+      required:
+        - name
+        - type
+        - initialBalance
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the account
+          example: "acc_123456789"
+        name:
+          type: string
+          description: Name of the account
+          example: "Itaú Checking Account"
+        type:
+          type: string
+          enum: [BANK_ACCOUNT, WALLET, SAVINGS_ACCOUNT, INVESTMENT_ACCOUNT, OTHER]
+          description: Type of account
+          example: "BANK_ACCOUNT"
+        initialBalance:
+          type: number
+          format: float
+          description: Initial balance when the account was created
+          example: 1000.00
+        currentBalance:
+          type: number
+          format: float
+          description: Current balance of the account
+          example: 850.00
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the account was created
+          example: "2026-02-11T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the account was last updated
+          example: "2026-02-11T15:30:00Z"
+
+    AccountBalance:
+      type: object
+      properties:
+        accountId:
+          type: string
+          description: ID of the account
+          example: "acc_123456789"
+        currentBalance:
+          type: number
+          format: float
+          description: Current balance of the account
+          example: 850.00
+        calculatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the balance was calculated
+          example: "2026-02-11T16:00:00Z"
+
+
     Summary:
       type: object
       properties:
@@ -308,6 +372,10 @@ components:
           pattern: "^\\d{4}-\\d{2}$"
           description: Target month for due date in YYYY-MM format (optional)
           example: "2026-03"
+        accountId:
+          type: string
+          description: ID of the associated account (required if paymentMethod is not CREDIT)
+          example: "acc_123456789"
         recurrence:
           type: object
           properties:
@@ -505,14 +573,25 @@ paths:
           schema:
             type: string
           description: Credit card ID
-        - name: month
-          in: query
-          required: true
-          schema:
-            type: string
-            pattern: "^\\d{4}-\\d{2}$"
-          description: Month in YYYY-MM format
-          example: "2026-03"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - month
+                - paymentAccountId
+              properties:
+                month:
+                  type: string
+                  pattern: "^\\d{4}-\\d{2}$"
+                  description: Month in YYYY-MM format
+                  example: "2026-03"
+                paymentAccountId:
+                  type: string
+                  description: ID of the account to debit for the payment
+                  example: "acc_123456789"
       responses:
         '200':
           description: Statement marked as paid
@@ -523,7 +602,9 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Statement for March 2026 marked as paid"
+                    example: "Statement for March 2026 marked as paid and linked to account acc_123456789"
+        '400':
+          description: Invalid input
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '404':
@@ -537,7 +618,50 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateTransactionRequest'
+              type: object
+              required:
+                - type
+                - name
+                - amount
+                - date
+              properties:
+                type:
+                  $ref: '#/components/schemas/Transaction/properties/type'
+                name:
+                  $ref: '#/components/schemas/Transaction/properties/name'
+                amount:
+                  $ref: '#/components/schemas/Transaction/properties/amount'
+                date:
+                  $ref: '#/components/schemas/Transaction/properties/date'
+                categoryId:
+                  $ref: '#/components/schemas/Transaction/properties/categoryId'
+                paymentMethod:
+                  $ref: '#/components/schemas/Transaction/properties/paymentMethod'
+                creditCardId:
+                  $ref: '#/components/schemas/Transaction/properties/creditCardId'
+                accountId:
+                  type: string
+                  description: ID of the associated account (required if paymentMethod is not CREDIT)
+                  example: "acc_123456789"
+                installments:
+                  type: integer
+                  minimum: 1
+                  description: Number of installments (optional)
+                  example: 3
+                targetDueMonth:
+                  type: string
+                  pattern: "^\\d{4}-\\d{2}$"
+                  description: Target month for due date in YYYY-MM format (optional)
+                  example: "2026-03"
+                recurrence:
+                  type: object
+                  properties:
+                    frequency:
+                      $ref: '#/components/schemas/RecurrenceRule/properties/frequency'
+                    interval:
+                      $ref: '#/components/schemas/RecurrenceRule/properties/interval'
+                    endDate:
+                      $ref: '#/components/schemas/RecurrenceRule/properties/endDate'
       responses:
         '201':
           description: Transaction created successfully
@@ -634,3 +758,183 @@ paths:
                 $ref: '#/components/schemas/Summary'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+
+  /accounts:
+    post:
+      summary: Create a new account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - type
+              properties:
+                name:
+                  type: string
+                  description: Name of the account
+                  example: "Itaú Checking Account"
+                type:
+                  type: string
+                  enum: [BANK_ACCOUNT, WALLET, SAVINGS_ACCOUNT, INVESTMENT_ACCOUNT, OTHER]
+                  description: Type of account
+                  example: "BANK_ACCOUNT"
+                initialBalance:
+                  type: number
+                  format: float
+                  description: Initial balance for the account
+                  example: 1000.00
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Invalid input
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    get:
+      summary: Get all accounts
+      responses:
+        '200':
+          description: List of accounts with current balances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /accounts/{id}:
+    get:
+      summary: Get a specific account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Account ID
+      responses:
+        '200':
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Account not found
+
+    patch:
+      summary: Update an account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Account ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the account
+                  example: "Itaú Savings Account"
+                type:
+                  type: string
+                  enum: [BANK_ACCOUNT, WALLET, SAVINGS_ACCOUNT, INVESTMENT_ACCOUNT, OTHER]
+                  description: Type of account
+                  example: "SAVINGS_ACCOUNT"
+      responses:
+        '200':
+          description: Account updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Invalid input
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Account not found
+
+    delete:
+      summary: Delete an account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Account ID
+      responses:
+        '204':
+          description: Account deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Account not found
+        '409':
+          description: Cannot delete account with associated transactions
+
+  /accounts/{id}/balance:
+    get:
+      summary: Get the current balance for an account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Account ID
+      responses:
+        '200':
+          description: Account balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountBalance'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Account not found
+
+  /accounts/{id}/transactions:
+    get:
+      summary: Get all transactions linked to an account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Account ID
+      responses:
+        '200':
+          description: List of transactions linked to the account
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Account not found
+

@@ -59,8 +59,8 @@ export function registerCreditCardTools(server: McpServer) {
       description: 'Mark all transactions in a credit card statement as paid',
       inputSchema: PayStatementInput
     },
-    async ({ cardId, month }) => {
-      await apiClient.post(`/credit-cards/${cardId}/pay-statement?month=${month}`, {});
+    async ({ cardId, month, paymentAccountId }) => {
+      await apiClient.post(`/credit-cards/${cardId}/pay-statement`, { month, paymentAccountId });
       return {
         content: [{ type: 'text', text: `Statement for ${month} paid successfully.` }]
       };
