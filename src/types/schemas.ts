@@ -6,7 +6,8 @@ export const CategorySchema = z.object({
   id: z.string(),
   name: z.string(),
   type: z.enum(["INCOME", "EXPENSE"]),
-  createdAt: z.string().datetime().optional() // Optional in response mainly? Spec says req.
+  color: z.string().optional(),
+  createdAt: z.string().datetime().optional()
 });
 
 export const TransactionSchema = z.object({
@@ -63,19 +64,40 @@ export const StatementSchema = z.object({
   availableLimit: z.number()
 });
 
+export const StatementStatusSchema = z.object({
+  cardId: z.string(),
+  month: z.string(),
+  isPaid: z.boolean()
+});
+
 export const SummarySchema = z.object({
   month: z.string(),
   income: z.number(),
   expenses: z.number(),
   balance: z.number(),
-  creditCardStatements: z.array(z.any()).optional() // Simplification
+  creditCardStatements: z.array(z.any()).optional()
+});
+
+export const SettingsSchema = z.object({
+  userName: z.string(),
+  language: z.enum(["pt-BR", "en-US"]),
+  currency: z.enum(["BRL", "USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF"]),
+  createdAt: z.string().datetime().optional(),
+  updatedAt: z.string().datetime().optional()
 });
 
 // --- Tool Inputs ---
 
 export const CreateCategoryInput = z.object({
   name: z.string(),
-  type: z.enum(["INCOME", "EXPENSE"])
+  type: z.enum(["INCOME", "EXPENSE"]),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color").optional()
+});
+
+export const UpdateCategoryInput = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color").optional()
 });
 
 export const CreateCreditCardInput = z.object({
@@ -84,6 +106,15 @@ export const CreateCreditCardInput = z.object({
   limitAmount: z.number().min(0),
   closingDay: z.number().int().min(1).max(31),
   dueDay: z.number().int().min(1).max(31)
+});
+
+export const UpdateCreditCardInput = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  brand: z.string().optional(),
+  limitAmount: z.number().min(0).optional(),
+  closingDay: z.number().int().min(1).max(31).optional(),
+  dueDay: z.number().int().min(1).max(31).optional()
 });
 
 export const CreateTransactionInput = z.object({
@@ -95,10 +126,29 @@ export const CreateTransactionInput = z.object({
   paymentMethod: z.enum(["CASH", "PIX", "DEBIT", "CREDIT"]).optional(),
   creditCardId: z.string().optional(),
   accountId: z.string().optional(),
-  installments: z.number().int().min(1).optional(), // From CreateTransactionRequest in spec
-  targetDueMonth: z.string().optional(), // From CreateTransactionRequest in spec
+  installments: z.number().int().min(1).optional(),
+  targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
   recurrence: z.object({
     frequency: z.enum(["MONTHLY", "WEEKLY", "YEARLY"]),
+    interval: z.number().int().min(1).optional(),
+    endDate: z.string().optional()
+  }).optional()
+});
+
+export const UpdateTransactionInput = z.object({
+  id: z.string(),
+  mode: z.enum(["SINGLE", "PENDING", "ALL"]).default("SINGLE").optional(),
+  type: z.enum(["INCOME", "EXPENSE"]).optional(),
+  name: z.string().optional(),
+  amount: z.number().positive().optional(),
+  date: z.string().describe("ISO date string YYYY-MM-DD").optional(),
+  categoryId: z.string().optional(),
+  paymentMethod: z.enum(["CASH", "PIX", "DEBIT", "CREDIT"]).optional(),
+  creditCardId: z.string().optional(),
+  accountId: z.string().optional(),
+  targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  recurrence: z.object({
+    frequency: z.enum(["MONTHLY", "WEEKLY", "YEARLY"]).optional(),
     interval: z.number().int().min(1).optional(),
     endDate: z.string().optional()
   }).optional()
@@ -117,7 +167,7 @@ export const UpdateAccountInput = z.object({
 });
 
 export const GetTransactionsInput = z.object({
-  month: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM").describe("Format: YYYY-MM")
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM").describe("Format: YYYY-MM").optional()
 });
 
 export const PayStatementInput = z.object({
@@ -128,4 +178,16 @@ export const PayStatementInput = z.object({
 
 export const GetSummaryInput = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM").describe("Format: YYYY-MM")
+});
+
+export const CreateSettingsInput = z.object({
+  userName: z.string(),
+  language: z.enum(["pt-BR", "en-US"]),
+  currency: z.enum(["BRL", "USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF"])
+});
+
+export const UpdateSettingsInput = z.object({
+  userName: z.string().optional(),
+  language: z.enum(["pt-BR", "en-US"]).optional(),
+  currency: z.enum(["BRL", "USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF"]).optional()
 });

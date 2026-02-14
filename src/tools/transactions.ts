@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { CreateTransactionInput, GetTransactionsInput } from '../types/schemas.js';
+import { CreateTransactionInput, GetTransactionsInput, UpdateTransactionInput } from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
 
 export function registerTransactionTools(server: McpServer) {
@@ -23,13 +23,45 @@ export function registerTransactionTools(server: McpServer) {
     'get_transactions',
     {
       title: 'Get Transactions',
-      description: 'List transactions for a specific month',
+      description: 'List transactions for a specific month (optional)',
       inputSchema: GetTransactionsInput
     },
     async ({ month }) => {
-      const transactions = await apiClient.get(`/transactions?month=${month}`);
+      const url = month ? `/transactions?month=${month}` : '/transactions';
+      const transactions = await apiClient.get(url);
       return {
         content: [{ type: 'text', text: `Transactions: ${JSON.stringify(transactions, null, 2)}` }]
+      };
+    }
+  );
+
+  server.registerTool(
+    'get_transaction',
+    {
+      title: 'Get Transaction',
+      description: 'Get a transaction by ID',
+      inputSchema: z.object({ id: z.string().describe("Transaction ID") })
+    },
+    async ({ id }) => {
+      const transaction = await apiClient.get(`/transactions/${id}`);
+      return {
+        content: [{ type: 'text', text: `Transaction: ${JSON.stringify(transaction, null, 2)}` }]
+      };
+    }
+  );
+
+  server.registerTool(
+    'update_transaction',
+    {
+      title: 'Update Transaction',
+      description: 'Update a transaction',
+      inputSchema: UpdateTransactionInput
+    },
+    async ({ id, mode, ...data }) => {
+      const url = mode ? `/transactions/${id}?mode=${mode}` : `/transactions/${id}`;
+      const transaction = await apiClient.patch(url, data);
+      return {
+        content: [{ type: 'text', text: `Transaction updated: ${JSON.stringify(transaction, null, 2)}` }]
       };
     }
   );
@@ -51,14 +83,33 @@ export function registerTransactionTools(server: McpServer) {
   );
 
   server.registerTool(
+    'unpay_transaction',
+    {
+      title: 'Unpay Transaction',
+      description: 'Mark a transaction as unpaid',
+      inputSchema: z.object({ id: z.string().describe("Transaction ID") })
+    },
+    async ({ id }) => {
+      await apiClient.patch(`/transactions/${id}/unpay`);
+      return {
+        content: [{ type: 'text', text: `Transaction ${id} marked as unpaid.` }]
+      };
+    }
+  );
+
+  server.registerTool(
     'delete_transaction',
     {
       title: 'Delete Transaction',
       description: 'Delete a transaction by ID',
-      inputSchema: z.object({ id: z.string().describe("Transaction ID") })
+      inputSchema: z.object({
+        id: z.string().describe("Transaction ID"),
+        mode: z.enum(["SINGLE", "PENDING", "ALL"]).default("SINGLE").optional()
+      })
     },
-    async ({ id }) => {
-      await apiClient.delete(`/transactions/${id}`);
+    async ({ id, mode }) => {
+      const url = mode ? `/transactions/${id}?mode=${mode}` : `/transactions/${id}`;
+      await apiClient.delete(url);
       return {
         content: [{ type: 'text', text: `Transaction ${id} deleted.` }]
       };

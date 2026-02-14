@@ -41,6 +41,11 @@ components:
           enum: [INCOME, EXPENSE]
           description: Type of the category
           example: "EXPENSE"
+        color:
+          type: string
+          nullable: true
+          description: Color for the category in hexadecimal format
+          example: "#FF5733"
         createdAt:
           type: string
           format: date-time
@@ -83,6 +88,9 @@ components:
           type: string
           description: ID of the associated category
           example: "cat_123456789"
+        category:
+          $ref: '#/components/schemas/Category'
+          description: Associated category object
         paymentMethod:
           type: string
           enum: [CASH, PIX, DEBIT, CREDIT]
@@ -92,6 +100,9 @@ components:
           type: string
           description: ID of the associated credit card (required if paymentMethod is CREDIT)
           example: "cc_123456789"
+        creditCard:
+          $ref: '#/components/schemas/CreditCard'
+          description: Associated credit card object
         installmentGroupId:
           type: string
           description: ID to group installment transactions
@@ -114,6 +125,9 @@ components:
           type: string
           description: ID of the associated account (required if paymentMethod is not CREDIT)
           example: "acc_123456789"
+        account:
+          $ref: '#/components/schemas/Account'
+          description: Associated account object
         paid:
           type: boolean
           default: false
@@ -238,6 +252,22 @@ components:
           description: Available credit limit
           example: 1550.00
 
+    StatementStatus:
+      type: object
+      properties:
+        cardId:
+          type: string
+          description: ID of the credit card
+          example: "cc_123456789"
+        month:
+          type: string
+          description: Month for the statement (YYYY-MM format)
+          example: "2026-03"
+        isPaid:
+          type: boolean
+          description: Whether all transactions in the statement are paid
+          example: true
+
     Account:
       type: object
       required:
@@ -355,7 +385,13 @@ components:
         amount:
           $ref: '#/components/schemas/Transaction/properties/amount'
         date:
-          $ref: '#/components/schemas/Transaction/properties/date'
+          type: string
+          format: date
+          description: |
+            Date of the transaction.
+            For CREDIT payments, if targetDueMonth is provided, the date will be calculated based on the credit card's due day.
+            Otherwise, this date will be used directly.
+          example: "2026-01-30"
         categoryId:
           $ref: '#/components/schemas/Transaction/properties/categoryId'
         paymentMethod:
@@ -370,7 +406,11 @@ components:
         targetDueMonth:
           type: string
           pattern: "^\\d{4}-\\d{2}$"
-          description: Target month for due date in YYYY-MM format (optional)
+          description: |
+            Target month for due date in YYYY-MM format (optional).
+            When provided for CREDIT payments, the transaction date(s) will be set to the credit card's due day in the specified month.
+            For installments, each installment will be scheduled in subsequent months on the due day.
+            Example: if credit card due day is 10, and targetDueMonth is "2026-03", the transaction date will be 2026-03-10.
           example: "2026-03"
         accountId:
           type: string
@@ -385,6 +425,83 @@ components:
               $ref: '#/components/schemas/RecurrenceRule/properties/interval'
             endDate:
               $ref: '#/components/schemas/RecurrenceRule/properties/endDate'
+
+    UpdateTransactionRequest:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/Transaction/properties/type'
+        name:
+          $ref: '#/components/schemas/Transaction/properties/name'
+        amount:
+          $ref: '#/components/schemas/Transaction/properties/amount'
+        date:
+          type: string
+          format: date
+          description: |
+            Date of the transaction.
+            For CREDIT payments, if targetDueMonth is provided, the date will be calculated based on the credit card's due day.
+            Otherwise, this date will be used directly.
+          example: "2026-01-30"
+        categoryId:
+          $ref: '#/components/schemas/Transaction/properties/categoryId'
+        paymentMethod:
+          $ref: '#/components/schemas/Transaction/properties/paymentMethod'
+        creditCardId:
+          $ref: '#/components/schemas/Transaction/properties/creditCardId'
+        targetDueMonth:
+          type: string
+          pattern: "^\\d{4}-\\d{2}$"
+          description: |
+            Target month for due date in YYYY-MM format (optional).
+            When provided for CREDIT payments, the transaction date will be set to the credit card's due day in the specified month.
+            Example: if credit card due day is 10, and targetDueMonth is "2026-03", the transaction date will be 2026-03-10.
+          example: "2026-03"
+        accountId:
+          type: string
+          description: ID of the associated account (required if paymentMethod is not CREDIT)
+          example: "acc_123456789"
+        recurrence:
+          type: object
+          properties:
+            frequency:
+              $ref: '#/components/schemas/RecurrenceRule/properties/frequency'
+            interval:
+              $ref: '#/components/schemas/RecurrenceRule/properties/interval'
+            endDate:
+              $ref: '#/components/schemas/RecurrenceRule/properties/endDate'
+
+    Settings:
+      type: object
+      required:
+        - userName
+        - language
+        - currency
+      properties:
+        userName:
+          type: string
+          description: Name of the user
+          example: "John Doe"
+        language:
+          type: string
+          enum: [pt-BR, en-US]
+          description: Preferred language
+          example: "pt-BR"
+        currency:
+          type: string
+          enum: [BRL, USD, EUR, GBP, JPY, CAD, AUD, CHF]
+          description: Default currency
+          example: "BRL"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when settings were created
+          example: "2026-01-30T10:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when settings were last updated
+          example: "2026-01-30T10:00:00Z"
 
   responses:
     UnauthorizedError:
@@ -428,6 +545,12 @@ paths:
                   type: string
                   enum: [INCOME, EXPENSE]
                   example: "EXPENSE"
+                color:
+                  type: string
+                  nullable: true
+                  pattern: "^#[0-9A-Fa-f]{6}$"
+                  description: Color in hexadecimal format
+                  example: "#FF5733"
       responses:
         '201':
           description: Category created successfully
@@ -455,6 +578,66 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
 
   /categories/{id}:
+    get:
+      summary: Get a category by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category ID
+      responses:
+        '200':
+          description: Category found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Category not found
+
+    patch:
+      summary: Update a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Groceries"
+                color:
+                  type: string
+                  nullable: true
+                  pattern: "^#[0-9A-Fa-f]{6}$"
+                  description: Color in hexadecimal format
+                  example: "#FF5733"
+      responses:
+        '200':
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          description: Invalid input
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Category not found
+
     delete:
       summary: Delete a category
       parameters:
@@ -533,6 +716,97 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
 
+  /credit-cards/{id}:
+    get:
+      summary: Get a credit card by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Credit card ID
+      responses:
+        '200':
+          description: Credit card found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCard'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Credit card not found
+
+    patch:
+      summary: Update a credit card
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Credit card ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Nubank Platinum"
+                brand:
+                  type: string
+                  example: "Visa"
+                limitAmount:
+                  type: number
+                  format: float
+                  example: 5000.00
+                closingDay:
+                  type: integer
+                  minimum: 1
+                  maximum: 31
+                  example: 15
+                dueDay:
+                  type: integer
+                  minimum: 1
+                  maximum: 31
+                  example: 22
+      responses:
+        '200':
+          description: Credit card updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCard'
+        '400':
+          description: Invalid input
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Credit card not found
+
+    delete:
+      summary: Delete a credit card
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Credit card ID
+      responses:
+        '200':
+          description: Credit card deleted successfully
+        '400':
+          description: Cannot delete credit card with associated transactions
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Credit card not found
+
   /credit-cards/{id}/statement:
     get:
       summary: Get credit card statement for a specific month
@@ -604,11 +878,41 @@ paths:
                     type: string
                     example: "Statement for March 2026 marked as paid and linked to account acc_123456789"
         '400':
-          description: Invalid input
+          description: Invalid input or statement is already paid
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '404':
-          description: Credit card or statement not found
+          description: Credit card not found
+
+  /credit-cards/{id}/statement-status:
+    get:
+      summary: Get credit card statement payment status for a specific month
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Credit card ID
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^\\d{4}-\\d{2}$"
+          description: Month in YYYY-MM format
+          example: "2026-03"
+      responses:
+        '200':
+          description: Credit card statement status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatementStatus'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Credit card not found
 
   /transactions:
     post:
@@ -670,7 +974,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Transaction'
         '400':
-          description: Invalid input
+          description: Invalid input or target statement is already closed (paid)
         '401':
           $ref: '#/components/responses/UnauthorizedError'
 
@@ -700,6 +1004,10 @@ paths:
   /transactions/{id}/pay:
     patch:
       summary: Mark a transaction as paid/received
+      description: |
+        Marks a transaction as paid or received.
+        **Note:** Credit card transactions cannot be marked as paid directly. They are automatically
+        marked as paid when the credit card statement is paid via the `POST /credit-cards/{id}/pay-statement` endpoint.
       parameters:
         - name: id
           in: path
@@ -714,12 +1022,105 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Cannot mark credit card transaction as paid directly
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '404':
           description: Transaction not found
 
+  /transactions/{id}/unpay:
+    patch:
+      summary: Mark a transaction as unpaid
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Transaction ID
+      responses:
+        '200':
+          description: Transaction marked as unpaid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
   /transactions/{id}:
+    get:
+      summary: Get a transaction by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Transaction ID
+      responses:
+        '200':
+          description: Transaction found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Transaction not found
+
+    patch:
+      summary: Update a transaction
+      description: |
+        Update a transaction. 
+        **Note:** Transactions that have already been paid cannot be edited.
+        For credit card transactions, you can use targetDueMonth to automatically calculate the date based on the credit card's due day.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Transaction ID
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [SINGLE, PENDING, ALL]
+            default: SINGLE
+          description: |
+            Update mode for recurring transactions:
+            - **SINGLE**: Update only this specific transaction (default)
+            - **PENDING**: Update this transaction and all future unpaid transactions with the same recurrence rule
+            - **ALL**: Update this transaction and ALL transactions (paid or unpaid) with the same recurrence rule
+            
+            If the transaction is not part of a recurrence series, this parameter is ignored.
+          example: SINGLE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTransactionRequest'
+      responses:
+        '200':
+          description: Transaction updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Invalid input or transaction is already paid
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Transaction not found
+
     delete:
       summary: Delete a transaction
       parameters:
@@ -729,6 +1130,21 @@ paths:
           schema:
             type: string
           description: Transaction ID
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [SINGLE, PENDING, ALL]
+            default: SINGLE
+          description: |
+            Deletion mode for recurring transactions:
+            - **SINGLE**: Delete only this specific transaction (default)
+            - **PENDING**: Delete this transaction and all future unpaid transactions with the same recurrence rule
+            - **ALL**: Delete this transaction and ALL transactions (paid or unpaid) with the same recurrence rule
+            
+            If the transaction is not part of a recurrence series, this parameter is ignored.
+          example: SINGLE
       responses:
         '200':
           description: Transaction deleted successfully
@@ -937,4 +1353,91 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
         '404':
           description: Account not found
+
+  /settings:
+    post:
+      summary: Create global settings (only if not exists)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userName
+                - language
+                - currency
+              properties:
+                userName:
+                  type: string
+                  example: "John Doe"
+                language:
+                  type: string
+                  enum: [pt-BR, en-US]
+                  example: "pt-BR"
+                currency:
+                  type: string
+                  enum: [BRL, USD, EUR, GBP, JPY, CAD, AUD, CHF]
+                  example: "BRL"
+      responses:
+        '201':
+          description: Settings created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '400':
+          description: Invalid input
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '409':
+          description: Settings already exist
+
+    get:
+      summary: Get global settings
+      responses:
+        '200':
+          description: Settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Settings not found
+
+    put:
+      summary: Update global settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userName:
+                  type: string
+                  example: "John Doe"
+                language:
+                  type: string
+                  enum: [pt-BR, en-US]
+                  example: "pt-BR"
+                currency:
+                  type: string
+                  enum: [BRL, USD, EUR, GBP, JPY, CAD, AUD, CHF]
+                  example: "BRL"
+      responses:
+        '200':
+          description: Settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '400':
+          description: Invalid input
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Settings not found
 

@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { CreateCategoryInput } from '../types/schemas.js';
+import { CreateCategoryInput, UpdateCategoryInput } from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
 
 export function registerCategoryTools(server: McpServer) {
@@ -30,6 +30,36 @@ export function registerCategoryTools(server: McpServer) {
       const categories = await apiClient.get('/categories');
       return {
         content: [{ type: 'text', text: `Categories: ${JSON.stringify(categories, null, 2)}` }]
+      };
+    }
+  );
+
+  server.registerTool(
+    'get_category',
+    {
+      title: 'Get Category',
+      description: 'Get a category by ID',
+      inputSchema: z.object({ id: z.string() })
+    },
+    async ({ id }) => {
+      const category = await apiClient.get(`/categories/${id}`);
+      return {
+        content: [{ type: 'text', text: `Category: ${JSON.stringify(category, null, 2)}` }]
+      };
+    }
+  );
+
+  server.registerTool(
+    'update_category',
+    {
+      title: 'Update Category',
+      description: 'Update a category',
+      inputSchema: UpdateCategoryInput
+    },
+    async ({ id, ...data }) => {
+      const category = await apiClient.patch(`/categories/${id}`, data);
+      return {
+        content: [{ type: 'text', text: `Category updated: ${JSON.stringify(category, null, 2)}` }]
       };
     }
   );

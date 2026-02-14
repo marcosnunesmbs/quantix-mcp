@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { CreateCreditCardInput, PayStatementInput } from '../types/schemas.js';
+import { CreateCreditCardInput, UpdateCreditCardInput, PayStatementInput } from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
 
 export function registerCreditCardTools(server: McpServer) {
@@ -35,6 +35,51 @@ export function registerCreditCardTools(server: McpServer) {
   );
 
   server.registerTool(
+    'get_credit_card',
+    {
+      title: 'Get Credit Card',
+      description: 'Get a credit card by ID',
+      inputSchema: z.object({ id: z.string() })
+    },
+    async ({ id }) => {
+      const card = await apiClient.get(`/credit-cards/${id}`);
+      return {
+        content: [{ type: 'text', text: `Credit Card: ${JSON.stringify(card, null, 2)}` }]
+      };
+    }
+  );
+
+  server.registerTool(
+    'update_credit_card',
+    {
+      title: 'Update Credit Card',
+      description: 'Update a credit card',
+      inputSchema: UpdateCreditCardInput
+    },
+    async ({ id, ...data }) => {
+      const card = await apiClient.patch(`/credit-cards/${id}`, data);
+      return {
+        content: [{ type: 'text', text: `Credit Card updated: ${JSON.stringify(card, null, 2)}` }]
+      };
+    }
+  );
+
+  server.registerTool(
+    'delete_credit_card',
+    {
+      title: 'Delete Credit Card',
+      description: 'Delete a credit card by ID',
+      inputSchema: z.object({ id: z.string() })
+    },
+    async ({ id }) => {
+      await apiClient.delete(`/credit-cards/${id}`);
+      return {
+        content: [{ type: 'text', text: `Credit Card deleted successfully (ID: ${id})` }]
+      };
+    }
+  );
+
+  server.registerTool(
     'get_statement',
     {
       title: 'Get Statement',
@@ -63,6 +108,24 @@ export function registerCreditCardTools(server: McpServer) {
       await apiClient.post(`/credit-cards/${cardId}/pay-statement`, { month, paymentAccountId });
       return {
         content: [{ type: 'text', text: `Statement for ${month} paid successfully.` }]
+      };
+    }
+  );
+
+  server.registerTool(
+    'get_statement_status',
+    {
+      title: 'Get Statement Status',
+      description: 'Get credit card statement payment status',
+      inputSchema: z.object({
+        id: z.string().describe('Credit Card ID'),
+        month: z.string().describe('Month in YYYY-MM format')
+      })
+    },
+    async ({ id, month }) => {
+      const status = await apiClient.get(`/credit-cards/${id}/statement-status?month=${month}`);
+      return {
+        content: [{ type: 'text', text: `Statement Status: ${JSON.stringify(status, null, 2)}` }]
       };
     }
   );
