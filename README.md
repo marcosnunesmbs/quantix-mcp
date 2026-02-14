@@ -52,6 +52,16 @@ The compiled output will be in the `dist` directory.
 
 ## Usage
 
+### Quick Start (npx)
+
+To run the server directly from npm:
+
+```bash
+npx quantix-mcp
+```
+
+Make sure the environment variables (`QUANTIX_API_URL`, `QUANTIX_API_KEY`) are set in your environment.
+
 ### Development
 
 Run the server in development mode (with hot reload):
@@ -122,6 +132,25 @@ See the OpenAPI spec in `specs/001-mcp-api-integration/contracts/openapi.yaml` f
    - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
    - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 2. Add the server configuration:
+
+   **Using npx (Recommended for users):**
+
+   ```json
+   {
+     "mcpServers": {
+       "quantix": {
+         "command": "npx",
+         "args": ["-y", "quantix-mcp"],
+         "env": {
+           "QUANTIX_API_URL": "https://api.quantix.example.com",
+           "QUANTIX_API_KEY": "your_api_key_here"
+         }
+       }
+     }
+   }
+   ```
+
+   **Using local build (For developers):**
 
    ```json
    {
