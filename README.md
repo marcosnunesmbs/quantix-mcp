@@ -5,10 +5,13 @@ MCP (Model Context Protocol) server for the Quantix Personal Finance API. Expose
 
 ## Features
 
-- **Categories**: Create, list, and delete financial categories
-- **Credit Cards**: Create, list, get statements, and pay statements
-- **Transactions**: Create, list, pay, and delete transactions
-- **Summary**: Get monthly financial summary
+- **Accounts**: Manage bank accounts, wallets, and investments.
+- **Categories**: Create, list, update, and delete financial categories.
+- **Credit Cards**: Manage cards, view/pay statements, and track statement status.
+- **Transactions**: Full CRUD for transactions including recurring payments and installment handling.
+- **Details**: Mark transactions as paid/unpaid.
+- **Settings**: Manage global user preferences (currency, language, etc.).
+- **Summary**: Get monthly financial summaries.
 
 All tool inputs are validated using [Zod](https://zod.dev/) schemas matching the OpenAPI spec.
 
@@ -77,20 +80,39 @@ npm start
 
 ## Exposed MCP Tools
 
-| Tool Name           | Description                                      |
-|---------------------|--------------------------------------------------|
-| create_category     | Create a new financial category                  |
-| get_categories      | List all categories                              |
-| delete_category     | Delete a category by ID                          |
-| create_credit_card  | Create a new credit card                         |
-| get_credit_cards    | List all credit cards                            |
-| get_statement       | Get credit card statement for a specific month   |
-| pay_statement       | Mark all transactions in a statement as paid     |
-| create_transaction  | Record a new income or expense                   |
-| get_transactions    | List transactions for a specific month           |
-| pay_transaction     | Mark a transaction as paid/received              |
-| delete_transaction  | Delete a transaction by ID                       |
-| get_summary         | Get monthly financial summary                    |
+| Category | Tool Name | Description |
+|----------|-----------|-------------|
+| **Accounts** | `create_account` | Create a new financial account |
+| | `get_accounts` | List all accounts with balances |
+| | `get_account` | Get details of a specific account |
+| | `update_account` | Update an existing account |
+| | `delete_account` | Delete an account |
+| | `get_account_balance` | Get current balance for an account |
+| | `get_account_transactions` | Get transactions linked to an account |
+| **Categories** | `create_category` | Create a new financial category |
+| | `get_categories` | List all categories |
+| | `get_category` | Get a category by ID |
+| | `update_category` | Update a category |
+| | `delete_category` | Delete a category |
+| **Credit Cards** | `create_credit_card` | Create a new credit card |
+| | `get_credit_cards` | List all credit cards |
+| | `get_credit_card` | Get a credit card by ID |
+| | `update_credit_card` | Update a credit card |
+| | `delete_credit_card` | Delete a credit card |
+| | `get_statement` | Get statement for a specific month |
+| | `get_statement_status` | Get payment status of a statement |
+| | `pay_statement` | Mark statement transactions as paid |
+| **Transactions** | `create_transaction` | Record a new transaction |
+| | `get_transactions` | List transactions (optional month filter) |
+| | `get_transaction` | Get transaction details |
+| | `update_transaction` | Update transaction (supports recurring) |
+| | `pay_transaction` | Mark transaction as paid |
+| | `unpay_transaction` | Mark transaction as unpaid |
+| | `delete_transaction` | Delete transaction (supports recurring) |
+| **Settings** | `create_settings` | Create global user settings |
+| | `get_settings` | Get global settings |
+| | `update_settings` | Update global settings |
+| **Summary** | `get_summary` | Get monthly financial summary |
 
 See the OpenAPI spec in `specs/001-mcp-api-integration/contracts/openapi.yaml` for detailed schemas.
 
@@ -127,12 +149,3 @@ npm test
 ## License
 
 ISC
-
-## Prerequisites
-
-- Node.js (v18 or higher recommended)
-- npm
-
-## Installation
-
-1. Clone or navigate to the project repository.
