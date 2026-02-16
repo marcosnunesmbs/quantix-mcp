@@ -5,6 +5,7 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import express, { type Request, type Response } from 'express';
 import { config } from './config.js';
 import { z } from 'zod';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerCategoryTools } from './tools/categories.js';
 import { registerCreditCardTools } from './tools/credit-cards.js';
 import { registerTransactionTools } from './tools/transactions.js';
@@ -31,30 +32,14 @@ export function getServer() {
     return mcpServer;
 }
 
-const app = express();
-app.use(express.json());
-
-app.post('/mcp', async (req: Request, res: Response) => {
+async function main() {
+    const transport = new StdioServerTransport();
     const mcpServer = getServer();
-
-    const transport = new StreamableHTTPServerTransport({
-    });
-    const mcpTransport = transport as unknown as Transport;
-
-    res.on('close', () => {
-        transport.close();
-        mcpServer.close();
-    });
-
-    await mcpServer.connect(mcpTransport);
-    await transport.handleRequest(req, res, req.body);
-});
-
-if (config.NODE_ENV !== 'test') {
-    const MCPPORT = config.MCPPORT;
-    app.listen(MCPPORT, () => {
-        console.log(`MCP server is running on http://localhost:${MCPPORT}/mcp`);
-    });
+    await mcpServer.connect(transport);
+    console.log('MCP server is running...');
 }
 
-export { app };
+main().catch(error => {
+    console.error('Server error:', error);
+    process.exit(1);
+});
