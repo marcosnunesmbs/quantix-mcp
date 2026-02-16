@@ -1,17 +1,18 @@
 
 # Quantix Personal Finance MCP Server
 
-MCP (Model Context Protocol) server for the Quantix Personal Finance API. Exposes all endpoints for categories, credit cards, transactions, and summaries as MCP tools, with full input validation and modular architecture.
+MCP (Model Context Protocol) server for the Quantix Personal Finance API. Exposes all endpoints as MCP tools with full input validation and modular architecture.
 
 ## Features
 
-- **Accounts**: Manage bank accounts, wallets, and investments.
-- **Categories**: Create, list, update, and delete financial categories.
+- **Accounts**: Manage bank accounts, wallets, savings, and investments.
+- **Categories**: Create, list, update, and delete financial categories (INCOME/EXPENSE).
 - **Credit Cards**: Manage cards, view/pay statements, and track statement status.
-- **Transactions**: Full CRUD for transactions including recurring payments and installment handling.
-- **Details**: Mark transactions as paid/unpaid.
-- **Settings**: Manage global user preferences (currency, language, etc.).
-- **Summary**: Get monthly financial summaries.
+- **Transactions**: Full CRUD with filters (month, date range, account, category, card, type, paid status), recurring payments, and installment handling.
+- **Transactions (paid status)**: Mark transactions as paid or unpaid.
+- **Settings**: Manage global user preferences (name, currency, language).
+- **Summary**: Financial summary by month or custom date range — income, expenses, balance, credit card totals, and category breakdowns.
+- **Data**: Export and import a full backup of all user data.
 
 All tool inputs are validated using [Zod](https://zod.dev/) schemas matching the OpenAPI spec.
 
@@ -42,8 +43,6 @@ MCPPORT=3001
 
 ## Building the Project
 
-Compile the TypeScript code to JavaScript:
-
 ```bash
 npm run build
 ```
@@ -54,8 +53,6 @@ The compiled output will be in the `dist` directory.
 
 ### Quick Start (npx)
 
-To run the server directly from npm:
-
 ```bash
 npx quantix-mcp
 ```
@@ -63,8 +60,6 @@ npx quantix-mcp
 Make sure the environment variables (`QUANTIX_API_URL`, `QUANTIX_API_KEY`) are set in your environment.
 
 ### Development
-
-Run the server in development mode (with hot reload):
 
 ```bash
 npm run dev
@@ -93,47 +88,50 @@ npm start
 | Category | Tool Name | Description |
 |----------|-----------|-------------|
 | **Accounts** | `create_account` | Create a new financial account |
-| | `get_accounts` | List all accounts with balances |
+| | `get_accounts` | List all accounts with current balances |
 | | `get_account` | Get details of a specific account |
-| | `update_account` | Update an existing account |
+| | `update_account` | Update account name or type |
 | | `delete_account` | Delete an account |
 | | `get_account_balance` | Get current balance for an account |
-| | `get_account_transactions` | Get transactions linked to an account |
-| **Categories** | `create_category` | Create a new financial category |
+| | `get_account_transactions` | List all transactions linked to an account |
+| **Categories** | `create_category` | Create a new financial category (INCOME/EXPENSE) |
 | | `get_categories` | List all categories |
 | | `get_category` | Get a category by ID |
-| | `update_category` | Update a category |
+| | `update_category` | Update category name or color |
 | | `delete_category` | Delete a category |
 | **Credit Cards** | `create_credit_card` | Create a new credit card |
 | | `get_credit_cards` | List all credit cards |
 | | `get_credit_card` | Get a credit card by ID |
-| | `update_credit_card` | Update a credit card |
+| | `update_credit_card` | Update credit card details |
 | | `delete_credit_card` | Delete a credit card |
-| | `get_statement` | Get statement for a specific month |
+| | `get_statement` | Get statement for a specific month (`YYYY-MM`) |
 | | `get_statement_status` | Get payment status of a statement |
-| | `pay_statement` | Mark statement transactions as paid |
-| **Transactions** | `create_transaction` | Record a new transaction |
-| | `get_transactions` | List transactions (optional month filter) |
-| | `get_transaction` | Get transaction details |
-| | `update_transaction` | Update transaction (supports recurring) |
-| | `pay_transaction` | Mark transaction as paid |
-| | `unpay_transaction` | Mark transaction as unpaid |
-| | `delete_transaction` | Delete transaction (supports recurring) |
-| **Settings** | `create_settings` | Create global user settings |
+| | `pay_statement` | Mark all statement transactions as paid |
+| **Transactions** | `create_transaction` | Record a new income or expense |
+| | `get_transactions` | List transactions — filters: `month`, `startDate`, `endDate`, `accountId`, `categoryId`, `creditCardId`, `type`, `paid` |
+| | `get_transaction` | Get transaction details by ID |
+| | `update_transaction` | Update a transaction (supports `mode`: SINGLE / PENDING / ALL for recurring/installments) |
+| | `pay_transaction` | Mark a transaction as paid/received |
+| | `unpay_transaction` | Mark a transaction as unpaid |
+| | `delete_transaction` | Delete a transaction (supports `mode`: SINGLE / PENDING / ALL) |
+| **Settings** | `create_settings` | Create global user settings (only if not yet created) |
 | | `get_settings` | Get global settings |
 | | `update_settings` | Update global settings |
-| **Summary** | `get_summary` | Get monthly financial summary |
+| **Summary** | `get_summary` | Financial summary — provide `month` (YYYY-MM) **or** `startDate` + `endDate` (YYYY-MM-DD) |
+| **Data** | `export_data` | Export all user data as a complete backup |
+| | `import_data` | Import a backup (`mode`: `reset` clears all data first, `increment` skips existing IDs) |
 
-See the OpenAPI spec in `specs/001-mcp-api-integration/contracts/openapi.yaml` for detailed schemas.
+See `openapi.yaml` at the project root for full endpoint and schema details.
 
 ## Setup with Claude Desktop
 
 1. Locate your Claude Desktop configuration file:
    - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
    - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
 2. Add the server configuration:
 
-   **Using npx (Recommended for users):**
+   **Using npx (Recommended):**
 
    ```json
    {
@@ -168,8 +166,6 @@ See the OpenAPI spec in `specs/001-mcp-api-integration/contracts/openapi.yaml` f
    ```
 
 ## Testing
-
-Run all tests:
 
 ```bash
 npm test
