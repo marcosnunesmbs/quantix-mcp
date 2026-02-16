@@ -7,13 +7,17 @@ export function registerSummaryTools(server: McpServer) {
     'get_summary',
     {
       title: 'Get Financial Summary',
-      description: 'Get monthly financial summary including income, expenses, and balance',
+      description: 'Get financial summary (income, expenses, balance, credit cards, category breakdowns). Provide either month (YYYY-MM) or startDate+endDate (YYYY-MM-DD).',
       inputSchema: GetSummaryInput
     },
-    async ({ month }) => {
-      const summary = await apiClient.get(`/summary?month=${month}`);
+    async ({ month, startDate, endDate }) => {
+      const params = new URLSearchParams();
+      if (month) params.append('month', month);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      const summary = await apiClient.get(`/summary?${params.toString()}`);
       return {
-        content: [{ type: 'text', text: `Summary for ${month}: ${JSON.stringify(summary, null, 2)}` }]
+        content: [{ type: 'text', text: `Summary: ${JSON.stringify(summary, null, 2)}` }]
       };
     }
   );

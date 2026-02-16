@@ -27,7 +27,7 @@ describe('Account Tools', () => {
 
   it('should register all account tools', () => {
     registerAccountTools(mockServer);
-    expect(mockServer.registerTool).toHaveBeenCalledTimes(6);
+    expect(mockServer.registerTool).toHaveBeenCalledTimes(7);
     expect(registeredTools['create_account']).toBeDefined();
     expect(registeredTools['get_accounts']).toBeDefined();
     expect(registeredTools['get_account']).toBeDefined();

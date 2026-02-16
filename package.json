@@ -1,6 +1,6 @@
 {
   "name": "quantix-mcp",
-  "version": "1.0.2",
+  "version": "0.3.6",
   "type": "module",
   "bin": {
     "quantix-mcp": "./dist/index.js"

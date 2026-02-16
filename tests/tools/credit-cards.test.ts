@@ -25,7 +25,7 @@ describe('Credit Card Tools', () => {
 
   it('should register all credit card tools', () => {
     registerCreditCardTools(mockServer);
-    expect(mockServer.registerTool).toHaveBeenCalledTimes(4);
+    expect(mockServer.registerTool).toHaveBeenCalledTimes(8);
     expect(registeredTools['create_credit_card']).toBeDefined();
     expect(registeredTools['get_credit_cards']).toBeDefined();
     expect(registeredTools['get_statement']).toBeDefined();

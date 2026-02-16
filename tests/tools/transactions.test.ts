@@ -27,7 +27,7 @@ describe('Transaction Tools', () => {
 
   it('should register transaction tools', () => {
     registerTransactionTools(mockServer);
-    expect(mockServer.registerTool).toHaveBeenCalledTimes(4); // create, get, pay, delete
+    expect(mockServer.registerTool).toHaveBeenCalledTimes(7); // create, get_all, get_one, update, pay, unpay, delete
   });
 
   describe('create_transaction', () => {

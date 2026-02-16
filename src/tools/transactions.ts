@@ -23,11 +23,21 @@ export function registerTransactionTools(server: McpServer) {
     'get_transactions',
     {
       title: 'Get Transactions',
-      description: 'List transactions for a specific month (optional)',
+      description: 'List transactions with optional filters (month, date range, account, category, credit card, type, paid status)',
       inputSchema: GetTransactionsInput
     },
-    async ({ month }) => {
-      const url = month ? `/transactions?month=${month}` : '/transactions';
+    async (args) => {
+      const params = new URLSearchParams();
+      if (args.month) params.append('month', args.month);
+      if (args.accountId) params.append('accountId', args.accountId);
+      if (args.categoryId) params.append('categoryId', args.categoryId);
+      if (args.creditCardId) params.append('creditCardId', args.creditCardId);
+      if (args.type) params.append('type', args.type);
+      if (args.startDate) params.append('startDate', args.startDate);
+      if (args.endDate) params.append('endDate', args.endDate);
+      if (args.paid !== undefined) params.append('paid', String(args.paid));
+      const qs = params.toString();
+      const url = qs ? `/transactions?${qs}` : '/transactions';
       const transactions = await apiClient.get(url);
       return {
         content: [{ type: 'text', text: `Transactions: ${JSON.stringify(transactions, null, 2)}` }]

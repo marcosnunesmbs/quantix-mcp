@@ -71,11 +71,21 @@ export const StatementStatusSchema = z.object({
 });
 
 export const SummarySchema = z.object({
-  month: z.string(),
+  period: z.object({
+    month: z.string().optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional()
+  }).optional(),
   income: z.number(),
   expenses: z.number(),
+  pendingIncome: z.number().optional(),
+  pendingExpenses: z.number().optional(),
   balance: z.number(),
-  creditCardStatements: z.array(z.any()).optional()
+  creditCardExpenses: z.array(z.any()).optional(),
+  expensesByCategory: z.array(z.any()).optional(),
+  incomeByCategory: z.array(z.any()).optional(),
+  accounts: z.array(z.any()).optional(),
+  totalBalance: z.number().optional()
 });
 
 export const SettingsSchema = z.object({
@@ -128,10 +138,13 @@ export const CreateTransactionInput = z.object({
   accountId: z.string().optional(),
   installments: z.number().int().min(1).optional(),
   targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Actual purchase date (credit card only), YYYY-MM-DD").optional(),
+  isPaid: z.boolean().describe("Whether the transaction is already paid at creation time").optional(),
   recurrence: z.object({
     frequency: z.enum(["MONTHLY", "WEEKLY", "YEARLY"]),
     interval: z.number().int().min(1).optional(),
-    endDate: z.string().optional()
+    endDate: z.string().optional(),
+    occurrences: z.number().int().min(2).describe("Number of occurrences (mutually exclusive with endDate)").optional()
   }).optional()
 });
 
@@ -150,14 +163,15 @@ export const UpdateTransactionInput = z.object({
   recurrence: z.object({
     frequency: z.enum(["MONTHLY", "WEEKLY", "YEARLY"]).optional(),
     interval: z.number().int().min(1).optional(),
-    endDate: z.string().optional()
+    endDate: z.string().optional(),
+    occurrences: z.number().int().min(2).describe("Number of occurrences (mutually exclusive with endDate)").optional()
   }).optional()
 });
 
 export const CreateAccountInput = z.object({
   name: z.string(),
   type: z.enum(["BANK_ACCOUNT", "WALLET", "SAVINGS_ACCOUNT", "INVESTMENT_ACCOUNT", "OTHER"]),
-  initialBalance: z.number()
+  initialBalance: z.number().optional()
 });
 
 export const UpdateAccountInput = z.object({
@@ -167,7 +181,14 @@ export const UpdateAccountInput = z.object({
 });
 
 export const GetTransactionsInput = z.object({
-  month: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM").describe("Format: YYYY-MM").optional()
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM").describe("Filter by month, format: YYYY-MM").optional(),
+  accountId: z.string().describe("Filter by account ID").optional(),
+  categoryId: z.string().describe("Filter by category ID").optional(),
+  creditCardId: z.string().describe("Filter by credit card ID").optional(),
+  type: z.enum(["INCOME", "EXPENSE"]).describe("Filter by transaction type").optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Filter from this date (inclusive), YYYY-MM-DD").optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Filter up to this date (inclusive), YYYY-MM-DD").optional(),
+  paid: z.boolean().describe("Filter by payment status (true = paid, false = unpaid)").optional()
 });
 
 export const PayStatementInput = z.object({
@@ -177,7 +198,9 @@ export const PayStatementInput = z.object({
 });
 
 export const GetSummaryInput = z.object({
-  month: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM").describe("Format: YYYY-MM")
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM").describe("Month in YYYY-MM format (use this OR startDate+endDate)").optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Start date for custom range, YYYY-MM-DD (use with endDate)").optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("End date for custom range, YYYY-MM-DD (use with startDate)").optional()
 });
 
 export const CreateSettingsInput = z.object({
@@ -190,4 +213,18 @@ export const UpdateSettingsInput = z.object({
   userName: z.string().optional(),
   language: z.enum(["pt-BR", "en-US"]).optional(),
   currency: z.enum(["BRL", "USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF"]).optional()
+});
+
+export const ImportDataInput = z.object({
+  mode: z.enum(["reset", "increment"]).describe("reset: clears all data before import; increment: adds new records, skipping existing IDs"),
+  version: z.string().describe('Export format version, must be "1.0"'),
+  exportedAt: z.string().datetime().describe("ISO timestamp of when the data was exported"),
+  data: z.object({
+    settings: z.any().nullable().optional(),
+    categories: z.array(z.any()).optional(),
+    accounts: z.array(z.any()).optional(),
+    creditCards: z.array(z.any()).optional(),
+    recurrenceRules: z.array(z.any()).optional(),
+    transactions: z.array(z.any()).optional()
+  })
 });

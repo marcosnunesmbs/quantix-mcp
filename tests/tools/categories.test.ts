@@ -27,7 +27,7 @@ describe('Category Tools', () => {
 
   it('should register category tools', () => {
     registerCategoryTools(mockServer);
-    expect(mockServer.registerTool).toHaveBeenCalledTimes(3);
+    expect(mockServer.registerTool).toHaveBeenCalledTimes(5);
     expect(registeredTools['create_category']).toBeDefined();
     expect(registeredTools['get_categories']).toBeDefined();
     expect(registeredTools['delete_category']).toBeDefined();

@@ -12,11 +12,12 @@ import { registerTransactionTools } from './tools/transactions.js';
 import { registerSummaryTools } from './tools/summary.js';
 import { registerAccountTools } from './tools/accounts.js';
 import { registerSettingsTools } from './tools/settings.js';
+import { registerDataTools } from './tools/data.js';
 
 export function getServer() {
     const mcpServer = new McpServer({
         name: 'quantix_mcp_server',
-        version: '1.0.0'
+        version: '0.3.6'
     });
 
     console.log('McpServer started');
@@ -28,6 +29,7 @@ export function getServer() {
     registerSummaryTools(mcpServer);
     registerAccountTools(mcpServer);
     registerSettingsTools(mcpServer);
+    // registerDataTools(mcpServer);
 
     return mcpServer;
 }
