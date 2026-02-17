@@ -197,6 +197,11 @@ export const PayStatementInput = z.object({
   paymentAccountId: z.string()
 });
 
+export const ReopenStatementInput = z.object({
+  cardId: z.string().describe('Credit card ID'),
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM").describe('Month in YYYY-MM format')
+});
+
 export const GetSummaryInput = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM").describe("Month in YYYY-MM format (use this OR startDate+endDate)").optional(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Start date for custom range, YYYY-MM-DD (use with endDate)").optional(),

@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { CreateCreditCardInput, UpdateCreditCardInput, PayStatementInput } from '../types/schemas.js';
+import { CreateCreditCardInput, UpdateCreditCardInput, PayStatementInput, ReopenStatementInput } from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
 
 export function registerCreditCardTools(server: McpServer) {
@@ -108,6 +108,21 @@ export function registerCreditCardTools(server: McpServer) {
       await apiClient.post(`/credit-cards/${cardId}/pay-statement`, { month, paymentAccountId });
       return {
         content: [{ type: 'text', text: `Statement for ${month} paid successfully.` }]
+      };
+    }
+  );
+
+  server.registerTool(
+    'reopen_statement',
+    {
+      title: 'Reopen Statement',
+      description: 'Reopen a credit card statement by marking all transactions as unpaid',
+      inputSchema: ReopenStatementInput
+    },
+    async ({ cardId, month }) => {
+      const result = await apiClient.post(`/credit-cards/${cardId}/reopen-statement`, { month });
+      return {
+        content: [{ type: 'text', text: `Statement reopened: ${JSON.stringify(result, null, 2)}` }]
       };
     }
   );
