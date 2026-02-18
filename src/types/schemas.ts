@@ -1,5 +1,30 @@
 import { z } from 'zod';
 
+// --- Transfer Entities ---
+export const TransferSchema = z.object({
+  id: z.string(),
+  sourceAccountId: z.string(),
+  destinationAccountId: z.string(),
+  amount: z.number().min(0.01),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  createdAt: z.string().datetime().optional(),
+  updatedAt: z.string().datetime().optional(),
+});
+
+export const CreateTransferRequestSchema = z.object({
+  sourceAccountId: z.string(),
+  destinationAccountId: z.string(),
+  amount: z.number().min(0.01),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+export const UpdateTransferRequestSchema = z.object({
+  sourceAccountId: z.string().optional(),
+  destinationAccountId: z.string().optional(),
+  amount: z.number().min(0.01).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
 // --- Domain Entities ---
 
 export const CategorySchema = z.object({

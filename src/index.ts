@@ -11,8 +11,10 @@ import { registerCreditCardTools } from './tools/credit-cards.js';
 import { registerTransactionTools } from './tools/transactions.js';
 import { registerSummaryTools } from './tools/summary.js';
 import { registerAccountTools } from './tools/accounts.js';
+
 import { registerSettingsTools } from './tools/settings.js';
 import { registerDataTools } from './tools/data.js';
+import { registerTransferTools } from './tools/transfers.js';
 
 export function getServer() {
     const mcpServer = new McpServer({
@@ -29,7 +31,8 @@ export function getServer() {
     registerSummaryTools(mcpServer);
     registerAccountTools(mcpServer);
     registerSettingsTools(mcpServer);
-    // registerDataTools(mcpServer);
+
+    registerTransferTools(mcpServer);
 
     return mcpServer;
 }
