@@ -12,10 +12,10 @@ export const TransferSchema = z.object({
 });
 
 export const CreateTransferRequestSchema = z.object({
-  sourceAccountId: z.string(),
-  destinationAccountId: z.string(),
-  amount: z.number().min(0.01),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  sourceAccountId: z.string().describe("Source account ID (required — must ask the user if not provided, do not assume or default)"),
+  destinationAccountId: z.string().describe("Destination account ID (required — must ask the user if not provided, do not assume or default)"),
+  amount: z.number().min(0.01).describe("Transfer amount (required — must ask the user if not provided, do not assume or default)"),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Transfer date (required — must ask the user if not provided, do not assume or default)"),
 });
 
 export const UpdateTransferRequestSchema = z.object({
@@ -155,7 +155,7 @@ export const UpdateCreditCardInput = z.object({
 export const CreateTransactionInput = z.object({
   type: z.enum(["INCOME", "EXPENSE"]),
   name: z.string(),
-  amount: z.number().nonnegative(),
+  amount: z.number().nonnegative().describe("Transaction amount (required — must ask the user if not provided, do not assume or default)"),
   date: z.string().describe("ISO date string YYYY-MM-DD"),
   categoryId: z.string().optional(),
   paymentMethod: z.enum(["CASH", "PIX", "DEBIT", "CREDIT"]).optional(),
