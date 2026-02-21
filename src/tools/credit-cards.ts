@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { CreateCreditCardInput, UpdateCreditCardInput, PayStatementInput, ReopenStatementInput } from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
+import { handleToolError } from '../utils/toolHelpers.js';
 
 export function registerCreditCardTools(server: McpServer) {
   server.registerTool(
@@ -12,10 +13,14 @@ export function registerCreditCardTools(server: McpServer) {
       inputSchema: CreateCreditCardInput
     },
     async (args) => {
-      const card = await apiClient.post('/credit-cards', args);
-      return {
-        content: [{ type: 'text', text: `Credit Card created: ${JSON.stringify(card, null, 2)}` }]
-      };
+      try {
+        const card = await apiClient.post('/credit-cards', args);
+        return {
+          content: [{ type: 'text', text: `Credit Card created: ${JSON.stringify(card, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -27,10 +32,14 @@ export function registerCreditCardTools(server: McpServer) {
       inputSchema: z.object({})
     },
     async () => {
-      const cards = await apiClient.get('/credit-cards');
-      return {
-        content: [{ type: 'text', text: `Credit Cards: ${JSON.stringify(cards, null, 2)}` }]
-      };
+      try {
+        const cards = await apiClient.get('/credit-cards');
+        return {
+          content: [{ type: 'text', text: `Credit Cards: ${JSON.stringify(cards, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -42,10 +51,14 @@ export function registerCreditCardTools(server: McpServer) {
       inputSchema: z.object({ id: z.string() })
     },
     async ({ id }) => {
-      const card = await apiClient.get(`/credit-cards/${id}`);
-      return {
-        content: [{ type: 'text', text: `Credit Card: ${JSON.stringify(card, null, 2)}` }]
-      };
+      try {
+        const card = await apiClient.get(`/credit-cards/${id}`);
+        return {
+          content: [{ type: 'text', text: `Credit Card: ${JSON.stringify(card, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -57,10 +70,14 @@ export function registerCreditCardTools(server: McpServer) {
       inputSchema: UpdateCreditCardInput
     },
     async ({ id, ...data }) => {
-      const card = await apiClient.patch(`/credit-cards/${id}`, data);
-      return {
-        content: [{ type: 'text', text: `Credit Card updated: ${JSON.stringify(card, null, 2)}` }]
-      };
+      try {
+        const card = await apiClient.patch(`/credit-cards/${id}`, data);
+        return {
+          content: [{ type: 'text', text: `Credit Card updated: ${JSON.stringify(card, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -72,10 +89,14 @@ export function registerCreditCardTools(server: McpServer) {
       inputSchema: z.object({ id: z.string() })
     },
     async ({ id }) => {
-      await apiClient.delete(`/credit-cards/${id}`);
-      return {
-        content: [{ type: 'text', text: `Credit Card deleted successfully (ID: ${id})` }]
-      };
+      try {
+        await apiClient.delete(`/credit-cards/${id}`);
+        return {
+          content: [{ type: 'text', text: `Credit Card deleted successfully (ID: ${id})` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -90,10 +111,14 @@ export function registerCreditCardTools(server: McpServer) {
       })
     },
     async ({ id, month }) => {
-      const statement = await apiClient.get(`/credit-cards/${id}/statement?month=${month}`);
-      return {
-        content: [{ type: 'text', text: `Statement: ${JSON.stringify(statement, null, 2)}` }]
-      };
+      try {
+        const statement = await apiClient.get(`/credit-cards/${id}/statement?month=${month}`);
+        return {
+          content: [{ type: 'text', text: `Statement: ${JSON.stringify(statement, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -105,10 +130,14 @@ export function registerCreditCardTools(server: McpServer) {
       inputSchema: PayStatementInput
     },
     async ({ cardId, month, paymentAccountId }) => {
-      await apiClient.post(`/credit-cards/${cardId}/pay-statement`, { month, paymentAccountId });
-      return {
-        content: [{ type: 'text', text: `Statement for ${month} paid successfully.` }]
-      };
+      try {
+        await apiClient.post(`/credit-cards/${cardId}/pay-statement`, { month, paymentAccountId });
+        return {
+          content: [{ type: 'text', text: `Statement for ${month} paid successfully.` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -120,10 +149,14 @@ export function registerCreditCardTools(server: McpServer) {
       inputSchema: ReopenStatementInput
     },
     async ({ cardId, month }) => {
-      const result = await apiClient.post(`/credit-cards/${cardId}/reopen-statement`, { month });
-      return {
-        content: [{ type: 'text', text: `Statement reopened: ${JSON.stringify(result, null, 2)}` }]
-      };
+      try {
+        const result = await apiClient.post(`/credit-cards/${cardId}/reopen-statement`, { month });
+        return {
+          content: [{ type: 'text', text: `Statement reopened: ${JSON.stringify(result, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -138,10 +171,14 @@ export function registerCreditCardTools(server: McpServer) {
       })
     },
     async ({ id, month }) => {
-      const status = await apiClient.get(`/credit-cards/${id}/statement-status?month=${month}`);
-      return {
-        content: [{ type: 'text', text: `Statement Status: ${JSON.stringify(status, null, 2)}` }]
-      };
+      try {
+        const status = await apiClient.get(`/credit-cards/${id}/statement-status?month=${month}`);
+        return {
+          content: [{ type: 'text', text: `Statement Status: ${JSON.stringify(status, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 }

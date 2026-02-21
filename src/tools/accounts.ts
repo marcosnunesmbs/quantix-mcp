@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { CreateAccountInput, UpdateAccountInput } from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
+import { handleToolError } from '../utils/toolHelpers.js';
 
 export function registerAccountTools(server: McpServer) {
   server.registerTool(
@@ -12,10 +13,14 @@ export function registerAccountTools(server: McpServer) {
       inputSchema: CreateAccountInput
     },
     async (args) => {
-      const account = await apiClient.post('/accounts', args);
-      return {
-        content: [{ type: 'text', text: `Account created: ${JSON.stringify(account, null, 2)}` }]
-      };
+      try {
+        const account = await apiClient.post('/accounts', args);
+        return {
+          content: [{ type: 'text', text: `Account created: ${JSON.stringify(account, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -27,10 +32,14 @@ export function registerAccountTools(server: McpServer) {
       inputSchema: z.object({})
     },
     async () => {
-      const accounts = await apiClient.get('/accounts');
-      return {
-        content: [{ type: 'text', text: `Accounts: ${JSON.stringify(accounts, null, 2)}` }]
-      };
+      try {
+        const accounts = await apiClient.get('/accounts');
+        return {
+          content: [{ type: 'text', text: `Accounts: ${JSON.stringify(accounts, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -42,10 +51,14 @@ export function registerAccountTools(server: McpServer) {
       inputSchema: z.object({ id: z.string() })
     },
     async ({ id }) => {
-      const account = await apiClient.get(`/accounts/${id}`);
-      return {
-        content: [{ type: 'text', text: `Account details: ${JSON.stringify(account, null, 2)}` }]
-      };
+      try {
+        const account = await apiClient.get(`/accounts/${id}`);
+        return {
+          content: [{ type: 'text', text: `Account details: ${JSON.stringify(account, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -57,10 +70,14 @@ export function registerAccountTools(server: McpServer) {
       inputSchema: UpdateAccountInput
     },
     async ({ id, ...data }) => {
-      const account = await apiClient.patch(`/accounts/${id}`, data);
-      return {
-        content: [{ type: 'text', text: `Account updated: ${JSON.stringify(account, null, 2)}` }]
-      };
+      try {
+        const account = await apiClient.patch(`/accounts/${id}`, data);
+        return {
+          content: [{ type: 'text', text: `Account updated: ${JSON.stringify(account, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -72,10 +89,14 @@ export function registerAccountTools(server: McpServer) {
       inputSchema: z.object({ id: z.string() })
     },
     async ({ id }) => {
-      await apiClient.delete(`/accounts/${id}`);
-      return {
-        content: [{ type: 'text', text: `Account deleted successfully (ID: ${id})` }]
-      };
+      try {
+        await apiClient.delete(`/accounts/${id}`);
+        return {
+          content: [{ type: 'text', text: `Account deleted successfully (ID: ${id})` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -87,10 +108,14 @@ export function registerAccountTools(server: McpServer) {
       inputSchema: z.object({ id: z.string() })
     },
     async ({ id }) => {
-      const balance = await apiClient.get(`/accounts/${id}/balance`);
-      return {
-        content: [{ type: 'text', text: `Account balance: ${JSON.stringify(balance, null, 2)}` }]
-      };
+      try {
+        const balance = await apiClient.get(`/accounts/${id}/balance`);
+        return {
+          content: [{ type: 'text', text: `Account balance: ${JSON.stringify(balance, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -102,10 +127,14 @@ export function registerAccountTools(server: McpServer) {
       inputSchema: z.object({ id: z.string() })
     },
     async ({ id }) => {
-      const transactions = await apiClient.get(`/accounts/${id}/transactions`);
-      return {
-        content: [{ type: 'text', text: `Account transactions: ${JSON.stringify(transactions, null, 2)}` }]
-      };
+      try {
+        const transactions = await apiClient.get(`/accounts/${id}/transactions`);
+        return {
+          content: [{ type: 'text', text: `Account transactions: ${JSON.stringify(transactions, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 }

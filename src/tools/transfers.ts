@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { apiClient } from '../services/apiClient.js';
 import { TransferSchema, CreateTransferRequestSchema, UpdateTransferRequestSchema } from '../types/schemas.js';
+import { handleToolError } from '../utils/toolHelpers.js';
 
 export function registerTransferTools(server: McpServer) {
   // Create transfer
@@ -15,10 +16,14 @@ export function registerTransferTools(server: McpServer) {
       inputSchema: CreateTransferRequestSchema
     },
     async (input: z.infer<typeof CreateTransferRequestSchema>) => {
-      const transfer = await apiClient.post('/transfers', input);
-      return {
-        content: [{ type: 'text', text: `Transfer created: ${JSON.stringify(transfer, null, 2)}` }]
-      };
+      try {
+        const transfer = await apiClient.post('/transfers', input);
+        return {
+          content: [{ type: 'text', text: `Transfer created: ${JSON.stringify(transfer, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -36,17 +41,21 @@ export function registerTransferTools(server: McpServer) {
       })
     },
     async (input: { accountId?: string | undefined; month?: string | undefined; startDate?: string | undefined; endDate?: string | undefined }) => {
-      const params = new URLSearchParams();
-      if (input.accountId) params.append('accountId', input.accountId);
-      if (input.month) params.append('month', input.month);
-      if (input.startDate) params.append('startDate', input.startDate);
-      if (input.endDate) params.append('endDate', input.endDate);
-      const qs = params.toString();
-      const url = qs ? `/transfers?${qs}` : '/transfers';
-      const transfers = await apiClient.get(url);
-      return {
-        content: [{ type: 'text', text: `Transfers: ${JSON.stringify(transfers, null, 2)}` }]
-      };
+      try {
+        const params = new URLSearchParams();
+        if (input.accountId) params.append('accountId', input.accountId);
+        if (input.month) params.append('month', input.month);
+        if (input.startDate) params.append('startDate', input.startDate);
+        if (input.endDate) params.append('endDate', input.endDate);
+        const qs = params.toString();
+        const url = qs ? `/transfers?${qs}` : '/transfers';
+        const transfers = await apiClient.get(url);
+        return {
+          content: [{ type: 'text', text: `Transfers: ${JSON.stringify(transfers, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -59,10 +68,14 @@ export function registerTransferTools(server: McpServer) {
       inputSchema: z.object({ id: z.string() })
     },
     async (input: { id: string }) => {
-      const transfer = await apiClient.get(`/transfers/${input.id}`);
-      return {
-        content: [{ type: 'text', text: `Transfer: ${JSON.stringify(transfer, null, 2)}` }]
-      };
+      try {
+        const transfer = await apiClient.get(`/transfers/${input.id}`);
+        return {
+          content: [{ type: 'text', text: `Transfer: ${JSON.stringify(transfer, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -75,11 +88,15 @@ export function registerTransferTools(server: McpServer) {
       inputSchema: z.object({ id: z.string() }).merge(UpdateTransferRequestSchema)
     },
     async (input: { id: string } & z.infer<typeof UpdateTransferRequestSchema>) => {
-      const { id, ...body } = input;
-      const transfer = await apiClient.patch(`/transfers/${id}`, body);
-      return {
-        content: [{ type: 'text', text: `Transfer updated: ${JSON.stringify(transfer, null, 2)}` }]
-      };
+      try {
+        const { id, ...body } = input;
+        const transfer = await apiClient.patch(`/transfers/${id}`, body);
+        return {
+          content: [{ type: 'text', text: `Transfer updated: ${JSON.stringify(transfer, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -92,10 +109,14 @@ export function registerTransferTools(server: McpServer) {
       inputSchema: z.object({ id: z.string() })
     },
     async (input: { id: string }) => {
-      await apiClient.delete(`/transfers/${input.id}`);
-      return {
-        content: [{ type: 'text', text: `Transfer deleted: ${input.id}` }]
-      };
+      try {
+        await apiClient.delete(`/transfers/${input.id}`);
+        return {
+          content: [{ type: 'text', text: `Transfer deleted: ${input.id}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 }

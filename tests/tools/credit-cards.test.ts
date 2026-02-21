@@ -1,11 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { registerCreditCardTools } from '../../src/tools/credit-cards.js';
 import { apiClient } from '../../src/services/apiClient.js';
+import { ApiClientError } from '../../src/services/apiClient.js';
 
 vi.mock('../../src/services/apiClient.js', () => ({
   apiClient: {
     get: vi.fn(),
     post: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  },
+  ApiClientError: class ApiClientError extends Error {
+    status: number;
+    statusText: string;
+    constructor(message: string, status: number, statusText: string) {
+      super(message);
+      this.name = 'ApiClientError';
+      this.status = status;
+      this.statusText = statusText;
+    }
   }
 }));
 
@@ -25,7 +38,7 @@ describe('Credit Card Tools', () => {
 
   it('should register all credit card tools', () => {
     registerCreditCardTools(mockServer);
-    expect(mockServer.registerTool).toHaveBeenCalledTimes(8);
+    expect(mockServer.registerTool).toHaveBeenCalledTimes(9);
     expect(registeredTools['create_credit_card']).toBeDefined();
     expect(registeredTools['get_credit_cards']).toBeDefined();
     expect(registeredTools['get_statement']).toBeDefined();
@@ -44,6 +57,16 @@ describe('Credit Card Tools', () => {
       expect(apiClient.post).toHaveBeenCalledWith('/credit-cards', input);
       expect(result.content[0].text).toContain('Visa');
     });
+
+    it('should return API error on failure', async () => {
+      registerCreditCardTools(mockServer);
+      const handler = registeredTools['create_credit_card'];
+      (apiClient.post as any).mockRejectedValue(new ApiClientError('fail', 400, 'Bad Request'));
+
+      const result = await handler({ name: 'Visa', limitAmount: 5000, closingDay: 10, dueDay: 20 });
+
+      expect(result.content[0].text).toMatch(/^API error 400/);
+    });
   });
 
   describe('get_credit_cards', () => {
@@ -56,6 +79,16 @@ describe('Credit Card Tools', () => {
 
       expect(apiClient.get).toHaveBeenCalledWith('/credit-cards');
       expect(result.content[0].text).toContain('Visa');
+    });
+
+    it('should return API error on failure', async () => {
+      registerCreditCardTools(mockServer);
+      const handler = registeredTools['get_credit_cards'];
+      (apiClient.get as any).mockRejectedValue(new ApiClientError('fail', 500, 'Internal Server Error'));
+
+      const result = await handler({});
+
+      expect(result.content[0].text).toMatch(/^API error 500/);
     });
   });
 
@@ -79,11 +112,20 @@ describe('Credit Card Tools', () => {
 
       await handler({ cardId: 'cc_1', month: '2026-03', paymentAccountId: 'acc_1' });
 
-      // Note: Assuming endpoint matches spec: /credit-cards/{id}/pay-statement
-      expect(apiClient.post).toHaveBeenCalledWith('/credit-cards/cc_1/pay-statement', { 
+      expect(apiClient.post).toHaveBeenCalledWith('/credit-cards/cc_1/pay-statement', {
         month: '2026-03',
         paymentAccountId: 'acc_1'
-      }); 
+      });
+    });
+
+    it('should return API error on failure', async () => {
+      registerCreditCardTools(mockServer);
+      const handler = registeredTools['pay_statement'];
+      (apiClient.post as any).mockRejectedValue(new ApiClientError('fail', 422, 'Unprocessable Entity'));
+
+      const result = await handler({ cardId: 'cc_1', month: '2026-03', paymentAccountId: 'acc_1' });
+
+      expect(result.content[0].text).toMatch(/^API error 422/);
     });
   });
 });

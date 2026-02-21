@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { CreateSettingsInput, UpdateSettingsInput } from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
+import { handleToolError } from '../utils/toolHelpers.js';
 
 export function registerSettingsTools(server: McpServer) {
   server.registerTool(
@@ -12,10 +13,14 @@ export function registerSettingsTools(server: McpServer) {
       inputSchema: CreateSettingsInput
     },
     async (args) => {
-      const settings = await apiClient.post('/settings', args);
-      return {
-        content: [{ type: 'text', text: `Settings created: ${JSON.stringify(settings, null, 2)}` }]
-      };
+      try {
+        const settings = await apiClient.post('/settings', args);
+        return {
+          content: [{ type: 'text', text: `Settings created: ${JSON.stringify(settings, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -27,10 +32,14 @@ export function registerSettingsTools(server: McpServer) {
       inputSchema: z.object({})
     },
     async () => {
-      const settings = await apiClient.get('/settings');
-      return {
-        content: [{ type: 'text', text: `Settings: ${JSON.stringify(settings, null, 2)}` }]
-      };
+      try {
+        const settings = await apiClient.get('/settings');
+        return {
+          content: [{ type: 'text', text: `Settings: ${JSON.stringify(settings, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -42,10 +51,14 @@ export function registerSettingsTools(server: McpServer) {
       inputSchema: UpdateSettingsInput
     },
     async (args) => {
-      const settings = await apiClient.put('/settings', args);
-      return {
-        content: [{ type: 'text', text: `Settings updated: ${JSON.stringify(settings, null, 2)}` }]
-      };
+      try {
+        const settings = await apiClient.put('/settings', args);
+        return {
+          content: [{ type: 'text', text: `Settings updated: ${JSON.stringify(settings, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 }

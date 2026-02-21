@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { registerAccountTools } from '../../src/tools/accounts.js';
 import { apiClient } from '../../src/services/apiClient.js';
+import { ApiClientError } from '../../src/services/apiClient.js';
 
 vi.mock('../../src/services/apiClient.js', () => ({
   apiClient: {
@@ -8,6 +9,16 @@ vi.mock('../../src/services/apiClient.js', () => ({
     post: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn(),
+  },
+  ApiClientError: class ApiClientError extends Error {
+    status: number;
+    statusText: string;
+    constructor(message: string, status: number, statusText: string) {
+      super(message);
+      this.name = 'ApiClientError';
+      this.status = status;
+      this.statusText = statusText;
+    }
   }
 }));
 
@@ -48,6 +59,16 @@ describe('Account Tools', () => {
       expect(apiClient.post).toHaveBeenCalledWith('/accounts', input);
       expect(result.content[0].text).toContain('My Bank');
     });
+
+    it('should return API error on failure', async () => {
+      registerAccountTools(mockServer);
+      const handler = registeredTools['create_account'];
+      (apiClient.post as any).mockRejectedValue(new ApiClientError('fail', 400, 'Bad Request'));
+
+      const result = await handler({ name: 'My Bank', type: 'BANK_ACCOUNT' });
+
+      expect(result.content[0].text).toMatch(/^API error 400/);
+    });
   });
 
   describe('get_accounts', () => {
@@ -60,6 +81,16 @@ describe('Account Tools', () => {
 
       expect(apiClient.get).toHaveBeenCalledWith('/accounts');
       expect(result.content[0].text).toContain('My Bank');
+    });
+
+    it('should return API error on failure', async () => {
+      registerAccountTools(mockServer);
+      const handler = registeredTools['get_accounts'];
+      (apiClient.get as any).mockRejectedValue(new ApiClientError('fail', 500, 'Internal Server Error'));
+
+      const result = await handler({});
+
+      expect(result.content[0].text).toMatch(/^API error 500/);
     });
   });
 
@@ -100,6 +131,16 @@ describe('Account Tools', () => {
 
       expect(apiClient.delete).toHaveBeenCalledWith('/accounts/acc_1');
       expect(result.content[0].text).toContain('deleted successfully');
+    });
+
+    it('should return API error on failure', async () => {
+      registerAccountTools(mockServer);
+      const handler = registeredTools['delete_account'];
+      (apiClient.delete as any).mockRejectedValue(new ApiClientError('fail', 404, 'Not Found'));
+
+      const result = await handler({ id: 'acc_1' });
+
+      expect(result.content[0].text).toMatch(/^API error 404/);
     });
   });
 

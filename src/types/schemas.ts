@@ -155,7 +155,7 @@ export const UpdateCreditCardInput = z.object({
 export const CreateTransactionInput = z.object({
   type: z.enum(["INCOME", "EXPENSE"]),
   name: z.string(),
-  amount: z.number().positive(),
+  amount: z.number().nonnegative(),
   date: z.string().describe("ISO date string YYYY-MM-DD"),
   categoryId: z.string().optional(),
   paymentMethod: z.enum(["CASH", "PIX", "DEBIT", "CREDIT"]).optional(),
@@ -178,7 +178,7 @@ export const UpdateTransactionInput = z.object({
   mode: z.enum(["SINGLE", "PENDING", "ALL"]).default("SINGLE").optional(),
   type: z.enum(["INCOME", "EXPENSE"]).optional(),
   name: z.string().optional(),
-  amount: z.number().positive().optional(),
+  amount: z.number().nonnegative().optional(),
   date: z.string().describe("ISO date string YYYY-MM-DD").optional(),
   categoryId: z.string().optional(),
   paymentMethod: z.enum(["CASH", "PIX", "DEBIT", "CREDIT"]).optional(),

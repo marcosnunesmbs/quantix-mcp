@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { GetSummaryInput } from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
+import { handleToolError } from '../utils/toolHelpers.js';
 
 export function registerSummaryTools(server: McpServer) {
   server.registerTool(
@@ -11,14 +12,18 @@ export function registerSummaryTools(server: McpServer) {
       inputSchema: GetSummaryInput
     },
     async ({ month, startDate, endDate }) => {
-      const params = new URLSearchParams();
-      if (month) params.append('month', month);
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-      const summary = await apiClient.get(`/summary?${params.toString()}`);
-      return {
-        content: [{ type: 'text', text: `Summary: ${JSON.stringify(summary, null, 2)}` }]
-      };
+      try {
+        const params = new URLSearchParams();
+        if (month) params.append('month', month);
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        const summary = await apiClient.get(`/summary?${params.toString()}`);
+        return {
+          content: [{ type: 'text', text: `Summary: ${JSON.stringify(summary, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 }

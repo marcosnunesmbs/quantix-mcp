@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { ImportDataInput } from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
+import { handleToolError } from '../utils/toolHelpers.js';
 
 export function registerDataTools(server: McpServer) {
   server.registerTool(
@@ -12,10 +13,14 @@ export function registerDataTools(server: McpServer) {
       inputSchema: z.object({})
     },
     async () => {
-      const data = await apiClient.get('/export');
-      return {
-        content: [{ type: 'text', text: `Export: ${JSON.stringify(data, null, 2)}` }]
-      };
+      try {
+        const data = await apiClient.get('/export');
+        return {
+          content: [{ type: 'text', text: `Export: ${JSON.stringify(data, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 
@@ -27,10 +32,14 @@ export function registerDataTools(server: McpServer) {
       inputSchema: ImportDataInput
     },
     async (args) => {
-      const result = await apiClient.post('/import', args);
-      return {
-        content: [{ type: 'text', text: `Import result: ${JSON.stringify(result, null, 2)}` }]
-      };
+      try {
+        const result = await apiClient.post('/import', args);
+        return {
+          content: [{ type: 'text', text: `Import result: ${JSON.stringify(result, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
     }
   );
 }

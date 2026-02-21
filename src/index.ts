@@ -11,18 +11,17 @@ import { registerCreditCardTools } from './tools/credit-cards.js';
 import { registerTransactionTools } from './tools/transactions.js';
 import { registerSummaryTools } from './tools/summary.js';
 import { registerAccountTools } from './tools/accounts.js';
-
 import { registerSettingsTools } from './tools/settings.js';
-import { registerDataTools } from './tools/data.js';
 import { registerTransferTools } from './tools/transfers.js';
 
 export function getServer() {
     const mcpServer = new McpServer({
         name: 'quantix_mcp_server',
-        version: '0.3.6'
+        version: '0.3.6',
+        description: 'MCP server for Quantix personal finance management',
     });
 
-    console.log('McpServer started');
+    console.log('Quantix MCP server started');
 
     // Register Tools here
     registerCategoryTools(mcpServer);
@@ -41,7 +40,7 @@ async function main() {
     const transport = new StdioServerTransport();
     const mcpServer = getServer();
     await mcpServer.connect(transport);
-    console.log('MCP server is running...');
+    console.log('Quantix MCP server is running...');
 }
 
 main().catch(error => {
