@@ -184,7 +184,10 @@ export const UpdateTransactionInput = z.object({
   paymentMethod: z.enum(["CASH", "PIX", "DEBIT", "CREDIT"]).optional(),
   creditCardId: z.string().optional(),
   accountId: z.string().optional(),
+  installments: z.number().int().min(1).optional(),
   targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  isPaid: z.boolean().optional(),
+  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Actual purchase date (credit card only), YYYY-MM-DD").optional(),
   recurrence: z.object({
     frequency: z.enum(["MONTHLY", "WEEKLY", "YEARLY"]).optional(),
     interval: z.number().int().min(1).optional(),
@@ -202,7 +205,8 @@ export const CreateAccountInput = z.object({
 export const UpdateAccountInput = z.object({
   id: z.string(),
   name: z.string().optional(),
-  type: z.enum(["BANK_ACCOUNT", "WALLET", "SAVINGS_ACCOUNT", "INVESTMENT_ACCOUNT", "OTHER"]).optional()
+  type: z.enum(["BANK_ACCOUNT", "WALLET", "SAVINGS_ACCOUNT", "INVESTMENT_ACCOUNT", "OTHER"]).optional(),
+  initialBalance: z.number().optional()
 });
 
 export const GetTransactionsInput = z.object({
@@ -243,6 +247,16 @@ export const UpdateSettingsInput = z.object({
   userName: z.string().optional(),
   language: z.enum(["pt-BR", "en-US"]).optional(),
   currency: z.enum(["BRL", "USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF"]).optional()
+});
+
+export const CreateAnticipationInput = z.object({
+  cardId: z.string().describe('Credit card ID'),
+  name: z.string().describe('Name/description of the anticipation'),
+  amount: z.number().min(0.01).describe('Amount to anticipate'),
+  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe('Date the money leaves the account (YYYY-MM-DD)'),
+  targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/).describe('Target statement due month (YYYY-MM)'),
+  accountId: z.string().describe('Account ID from which money will be debited'),
+  categoryId: z.string().optional().describe('Category ID for both transactions')
 });
 
 export const ImportDataInput = z.object({

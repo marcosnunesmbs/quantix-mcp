@@ -13,11 +13,19 @@ import { registerSummaryTools } from './tools/summary.js';
 import { registerAccountTools } from './tools/accounts.js';
 import { registerSettingsTools } from './tools/settings.js';
 import { registerTransferTools } from './tools/transfers.js';
+import { registerDataTools } from './tools/data.js';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
 
 export function getServer() {
     const mcpServer = new McpServer({
         name: 'quantix_mcp_server',
-        version: '0.3.6',
+        version: pkg.version,
         description: 'MCP server for Quantix personal finance management',
     });
 
@@ -32,6 +40,7 @@ export function getServer() {
     registerSettingsTools(mcpServer);
 
     registerTransferTools(mcpServer);
+    registerDataTools(mcpServer);
 
     return mcpServer;
 }

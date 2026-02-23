@@ -102,10 +102,9 @@ export function registerTransactionTools(server: McpServer) {
     },
     async ({ id }) => {
       try {
-        // PATCH /transactions/{id}/pay
-        await apiClient.patch(`/transactions/${id}/pay`);
+        const transaction = await apiClient.patch(`/transactions/${id}/pay`);
         return {
-          content: [{ type: 'text', text: `Transaction ${id} marked as paid.` }]
+          content: [{ type: 'text', text: `Transaction marked as paid: ${JSON.stringify(transaction, null, 2)}` }]
         };
       } catch (error) {
         return handleToolError(error);
@@ -122,9 +121,9 @@ export function registerTransactionTools(server: McpServer) {
     },
     async ({ id }) => {
       try {
-        await apiClient.patch(`/transactions/${id}/unpay`);
+        const transaction = await apiClient.patch(`/transactions/${id}/unpay`);
         return {
-          content: [{ type: 'text', text: `Transaction ${id} marked as unpaid.` }]
+          content: [{ type: 'text', text: `Transaction marked as unpaid: ${JSON.stringify(transaction, null, 2)}` }]
         };
       } catch (error) {
         return handleToolError(error);

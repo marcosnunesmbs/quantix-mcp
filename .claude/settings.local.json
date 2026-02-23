@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm test)"
+      "Bash(npm test)",
+      "Bash(cd /e/quantix-mcp && npm run build 2>&1)"
     ]
   }
 }

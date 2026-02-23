@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { CreateCreditCardInput, UpdateCreditCardInput, PayStatementInput, ReopenStatementInput } from '../types/schemas.js';
+import { CreateCreditCardInput, UpdateCreditCardInput, PayStatementInput, ReopenStatementInput, CreateAnticipationInput } from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
 import { handleToolError } from '../utils/toolHelpers.js';
 
@@ -175,6 +175,25 @@ export function registerCreditCardTools(server: McpServer) {
         const status = await apiClient.get(`/credit-cards/${id}/statement-status?month=${month}`);
         return {
           content: [{ type: 'text', text: `Statement Status: ${JSON.stringify(status, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'create_anticipation',
+    {
+      title: 'Create Credit Card Anticipation',
+      description: 'Create a credit card anticipation (advance payment toward a statement). Creates a linked pair: INCOME on the credit card side and EXPENSE on the account side.',
+      inputSchema: CreateAnticipationInput
+    },
+    async ({ cardId, ...body }) => {
+      try {
+        const result = await apiClient.post(`/credit-cards/${cardId}/anticipations`, body);
+        return {
+          content: [{ type: 'text', text: `Anticipation created: ${JSON.stringify(result, null, 2)}` }]
         };
       } catch (error) {
         return handleToolError(error);

@@ -119,22 +119,4 @@ export function registerAccountTools(server: McpServer) {
     }
   );
 
-  server.registerTool(
-    'get_account_transactions',
-    {
-      title: 'Get Account Transactions',
-      description: 'Get all transactions linked to an account',
-      inputSchema: z.object({ id: z.string() })
-    },
-    async ({ id }) => {
-      try {
-        const transactions = await apiClient.get(`/accounts/${id}/transactions`);
-        return {
-          content: [{ type: 'text', text: `Account transactions: ${JSON.stringify(transactions, null, 2)}` }]
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    }
-  );
 }
