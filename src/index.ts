@@ -14,6 +14,7 @@ import { registerAccountTools } from './tools/accounts.js';
 import { registerSettingsTools } from './tools/settings.js';
 import { registerTransferTools } from './tools/transfers.js';
 import { registerDataTools } from './tools/data.js';
+import { registerSubscriptionTools } from './tools/subscriptions.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -41,6 +42,7 @@ export function getServer() {
 
     registerTransferTools(mcpServer);
     registerDataTools(mcpServer);
+    registerSubscriptionTools(mcpServer);
 
     return mcpServer;
 }

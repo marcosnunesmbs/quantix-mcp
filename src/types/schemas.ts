@@ -272,3 +272,33 @@ export const ImportDataInput = z.object({
     transactions: z.array(z.any()).optional()
   })
 });
+
+export const SubscriptionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  amount: z.number().min(0.01),
+  billingDay: z.number().int().min(1).max(31),
+  creditCardId: z.string(),
+  categoryId: z.string().optional(),
+  active: z.boolean(),
+  createdAt: z.string().datetime().optional(),
+  updatedAt: z.string().datetime().optional()
+});
+
+export const CreateSubscriptionInput = z.object({
+  name: z.string().describe("Name of the subscription (e.g., Netflix, Spotify)"),
+  amount: z.number().min(0.01).describe("Monthly amount charged"),
+  billingDay: z.number().int().min(1).max(31).describe("Day of the month when the subscription is charged (1-31)"),
+  creditCardId: z.string().describe("ID of the credit card used for this subscription"),
+  categoryId: z.string().describe("ID of the expense category").optional()
+});
+
+export const UpdateSubscriptionInput = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  amount: z.number().min(0.01).optional(),
+  billingDay: z.number().int().min(1).max(31).optional(),
+  creditCardId: z.string().optional(),
+  categoryId: z.string().optional(),
+  active: z.boolean().optional()
+});
