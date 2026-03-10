@@ -32,6 +32,12 @@ MCPPORT=3001
 
 `QUANTIX_API_KEY` is required. `QUANTIX_API_URL` defaults to `https://api.quantix.example.com`.
 
+## Authentication
+
+The MCP server uses **API Key authentication** via the `x-api-key` header for all requests to the Quantix API.
+
+While the Quantix web application uses JWT (Bearer) tokens, they expire in 15 minutes, which is unsuitable for a persistent MCP server. Users **must** generate an API Key in the Quantix web settings to use with this server.
+
 ## Architecture
 
 This is an MCP server that proxies Quantix Personal Finance API endpoints as MCP tools. It runs in **stdio mode** (for Claude Desktop / `npx quantix-mcp`).
