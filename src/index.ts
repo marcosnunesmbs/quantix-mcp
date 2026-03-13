@@ -30,7 +30,7 @@ export function getServer() {
         description: 'MCP server for Quantix personal finance management',
     });
 
-    console.log('Quantix MCP server started');
+    console.error('Quantix MCP server started');
 
     // Register Tools here
     registerCategoryTools(mcpServer);
