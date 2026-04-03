@@ -9,7 +9,7 @@ paths:
           description: ''
       tags:
         - App
-  /categories:
+  /subscriptions:
     post:
       operationId: create
       parameters:
@@ -24,28 +24,41 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCategoryDto'
+              $ref: '#/components/schemas/CreateSubscriptionDto'
       responses:
         '201':
-          description: Category created successfully.
+          description: Subscription created successfully.
         '400':
           description: Invalid input.
+        '404':
+          description: Credit card not found.
       security: &ref_1
         - bearer: []
-      summary: Create a new category
+      summary: Create a new subscription
       tags: &ref_2
-        - categories
+        - subscriptions
     get:
       operationId: findAll
       parameters:
         - *ref_0
       responses:
         '200':
-          description: List of categories.
+          description: List of subscriptions.
       security: *ref_1
-      summary: Get all categories
+      summary: Get all subscriptions
       tags: *ref_2
-  /categories/{id}:
+  /subscriptions/active:
+    get:
+      operationId: findActive
+      parameters:
+        - *ref_0
+      responses:
+        '200':
+          description: List of active subscriptions.
+      security: *ref_1
+      summary: Get all active subscriptions
+      tags: *ref_2
+  /subscriptions/{id}:
     get:
       operationId: findOne
       parameters:
@@ -57,11 +70,11 @@ paths:
             type: string
       responses:
         '200':
-          description: Category found.
+          description: Subscription found.
         '404':
-          description: Category not found.
+          description: Subscription not found.
       security: *ref_1
-      summary: Get a category by ID
+      summary: Get a subscription by ID
       tags: *ref_2
     patch:
       operationId: update
@@ -77,14 +90,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateCategoryDto'
+              $ref: '#/components/schemas/UpdateSubscriptionDto'
       responses:
         '200':
-          description: Category updated successfully.
+          description: Subscription updated successfully.
         '404':
-          description: Category not found.
+          description: Subscription or credit card not found.
       security: *ref_1
-      summary: Update a category
+      summary: Update a subscription
       tags: *ref_2
     delete:
       operationId: remove
@@ -97,11 +110,47 @@ paths:
             type: string
       responses:
         '200':
-          description: Category deleted successfully.
+          description: Subscription deactivated successfully.
         '404':
-          description: Category not found.
+          description: Subscription not found.
       security: *ref_1
-      summary: Delete a category
+      summary: Deactivate a subscription (soft delete)
+      tags: *ref_2
+  /subscriptions/{id}/permanent:
+    delete:
+      operationId: hardDelete
+      parameters:
+        - *ref_0
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subscription deleted permanently.
+        '404':
+          description: Subscription not found.
+      security: *ref_1
+      summary: Permanently delete a subscription
+      tags: *ref_2
+  /subscriptions/{id}/reactivate:
+    patch:
+      operationId: reactivate
+      parameters:
+        - *ref_0
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subscription reactivated successfully.
+        '404':
+          description: Subscription not found.
+      security: *ref_1
+      summary: Reactivate a deactivated subscription
       tags: *ref_2
   /auth/register:
     post:
@@ -266,11 +315,168 @@ paths:
         - bearer: []
       summary: Get current user profile
       tags: *ref_3
+  /dev/notifications/trigger/{event}:
+    get:
+      operationId: trigger
+      parameters:
+        - name: event
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: to
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags:
+        - NotificationsSandbox
+  /chat/message:
+    post:
+      operationId: handleMessage
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageDto'
+      responses:
+        '202':
+          description: ''
+      tags: &ref_4
+        - Chat
+  /chat/sync:
+    get:
+      operationId: getHistory
+      parameters:
+        - name: limit
+          required: true
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+      tags: *ref_4
+  /chat/unread-count:
+    get:
+      operationId: getUnreadCount
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags: *ref_4
+  /chat/mark-as-read:
+    post:
+      operationId: markAsRead
+      parameters: []
+      responses:
+        '201':
+          description: ''
+      tags: *ref_4
+  /categories:
+    post:
+      operationId: create
+      parameters:
+        - &ref_5
+          name: x-api-key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryDto'
+      responses:
+        '201':
+          description: Category created successfully.
+        '400':
+          description: Invalid input.
+      security: &ref_6
+        - bearer: []
+      summary: Create a new category
+      tags: &ref_7
+        - categories
+    get:
+      operationId: findAll
+      parameters:
+        - *ref_5
+      responses:
+        '200':
+          description: List of categories.
+      security: *ref_6
+      summary: Get all categories
+      tags: *ref_7
+  /categories/{id}:
+    get:
+      operationId: findOne
+      parameters:
+        - *ref_5
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category found.
+        '404':
+          description: Category not found.
+      security: *ref_6
+      summary: Get a category by ID
+      tags: *ref_7
+    patch:
+      operationId: update
+      parameters:
+        - *ref_5
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryDto'
+      responses:
+        '200':
+          description: Category updated successfully.
+        '404':
+          description: Category not found.
+      security: *ref_6
+      summary: Update a category
+      tags: *ref_7
+    delete:
+      operationId: remove
+      parameters:
+        - *ref_5
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category deleted successfully.
+        '404':
+          description: Category not found.
+      security: *ref_6
+      summary: Delete a category
+      tags: *ref_7
   /transactions:
     post:
       operationId: create
       parameters:
-        - &ref_4
+        - &ref_8
           name: x-api-key
           in: header
           required: false
@@ -287,15 +493,15 @@ paths:
           description: Transaction created successfully.
         '400':
           description: Invalid input.
-      security: &ref_5
+      security: &ref_9
         - bearer: []
       summary: Create a new transaction
-      tags: &ref_6
+      tags: &ref_10
         - transactions
     get:
       operationId: findAll
       parameters:
-        - *ref_4
+        - *ref_8
         - name: month
           required: false
           in: query
@@ -364,14 +570,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TransactionWithRelationsDto'
-      security: *ref_5
+      security: *ref_9
       summary: Get all transactions with optional filters
-      tags: *ref_6
+      tags: *ref_10
   /transactions/{id}:
     get:
       operationId: findOne
       parameters:
-        - *ref_4
+        - *ref_8
         - name: id
           required: true
           in: path
@@ -386,13 +592,13 @@ paths:
                 $ref: '#/components/schemas/TransactionWithRelationsDto'
         '404':
           description: Transaction not found.
-      security: *ref_5
+      security: *ref_9
       summary: Get a transaction by ID
-      tags: *ref_6
+      tags: *ref_10
     patch:
       operationId: update
       parameters:
-        - *ref_4
+        - *ref_8
         - name: id
           required: true
           in: path
@@ -426,13 +632,13 @@ paths:
                 $ref: '#/components/schemas/TransactionWithRelationsDto'
         '404':
           description: Transaction not found.
-      security: *ref_5
+      security: *ref_9
       summary: Update a transaction
-      tags: *ref_6
+      tags: *ref_10
     delete:
       operationId: remove
       parameters:
-        - *ref_4
+        - *ref_8
         - name: id
           required: true
           in: path
@@ -456,14 +662,14 @@ paths:
           description: Transaction deleted successfully.
         '404':
           description: Transaction not found.
-      security: *ref_5
+      security: *ref_9
       summary: Delete a transaction
-      tags: *ref_6
+      tags: *ref_10
   /transactions/{id}/pay:
     patch:
       operationId: markAsPaid
       parameters:
-        - *ref_4
+        - *ref_8
         - name: id
           required: true
           in: path
@@ -478,14 +684,14 @@ paths:
                 $ref: '#/components/schemas/TransactionWithRelationsDto'
         '404':
           description: Transaction not found.
-      security: *ref_5
+      security: *ref_9
       summary: Mark a transaction as paid
-      tags: *ref_6
+      tags: *ref_10
   /transactions/{id}/unpay:
     patch:
       operationId: markAsUnpaid
       parameters:
-        - *ref_4
+        - *ref_8
         - name: id
           required: true
           in: path
@@ -500,9 +706,9 @@ paths:
                 $ref: '#/components/schemas/TransactionWithRelationsDto'
         '404':
           description: Transaction not found.
-      security: *ref_5
+      security: *ref_9
       summary: Mark a transaction as unpaid
-      tags: *ref_6
+      tags: *ref_10
   /summary:
     get:
       description: >-
@@ -551,7 +757,7 @@ paths:
     post:
       operationId: create
       parameters:
-        - &ref_7
+        - &ref_11
           name: x-api-key
           in: header
           required: false
@@ -568,26 +774,26 @@ paths:
           description: Credit card created successfully.
         '400':
           description: Invalid input.
-      security: &ref_8
+      security: &ref_12
         - bearer: []
       summary: Create a new credit card
-      tags: &ref_9
+      tags: &ref_13
         - credit-cards
     get:
       operationId: findAll
       parameters:
-        - *ref_7
+        - *ref_11
       responses:
         '200':
           description: List of credit cards.
-      security: *ref_8
+      security: *ref_12
       summary: Get all credit cards
-      tags: *ref_9
+      tags: *ref_13
   /credit-cards/{id}:
     get:
       operationId: findOne
       parameters:
-        - *ref_7
+        - *ref_11
         - name: id
           required: true
           in: path
@@ -598,13 +804,13 @@ paths:
           description: Credit card found.
         '404':
           description: Credit card not found.
-      security: *ref_8
+      security: *ref_12
       summary: Get a credit card by ID
-      tags: *ref_9
+      tags: *ref_13
     patch:
       operationId: update
       parameters:
-        - *ref_7
+        - *ref_11
         - name: id
           required: true
           in: path
@@ -621,13 +827,13 @@ paths:
           description: Credit card updated successfully.
         '404':
           description: Credit card not found.
-      security: *ref_8
+      security: *ref_12
       summary: Update a credit card
-      tags: *ref_9
+      tags: *ref_13
     delete:
       operationId: remove
       parameters:
-        - *ref_7
+        - *ref_11
         - name: id
           required: true
           in: path
@@ -638,14 +844,14 @@ paths:
           description: Credit card deleted successfully.
         '404':
           description: Credit card not found.
-      security: *ref_8
+      security: *ref_12
       summary: Delete a credit card
-      tags: *ref_9
+      tags: *ref_13
   /credit-cards/{id}/statement:
     get:
       operationId: getStatement
       parameters:
-        - *ref_7
+        - *ref_11
         - name: id
           required: true
           in: path
@@ -663,14 +869,14 @@ paths:
           description: Credit card statement.
         '404':
           description: Credit card not found.
-      security: *ref_8
+      security: *ref_12
       summary: Get credit card statement for a specific month
-      tags: *ref_9
+      tags: *ref_13
   /credit-cards/{id}/pay-statement:
     post:
       operationId: payStatement
       parameters:
-        - *ref_7
+        - *ref_11
         - name: id
           required: true
           in: path
@@ -687,14 +893,14 @@ paths:
           description: Statement marked as paid.
         '404':
           description: Credit card not found.
-      security: *ref_8
+      security: *ref_12
       summary: Mark all transactions in a credit card statement as paid
-      tags: *ref_9
+      tags: *ref_13
   /credit-cards/{id}/reopen-statement:
     post:
       operationId: reopenStatement
       parameters:
-        - *ref_7
+        - *ref_11
         - name: id
           required: true
           in: path
@@ -713,14 +919,14 @@ paths:
           description: Statement is already open or invalid input.
         '404':
           description: Credit card not found.
-      security: *ref_8
+      security: *ref_12
       summary: Reopen a credit card statement by marking all transactions as unpaid
-      tags: *ref_9
+      tags: *ref_13
   /credit-cards/{id}/statement-status:
     get:
       operationId: getStatementStatus
       parameters:
-        - *ref_7
+        - *ref_11
         - name: id
           required: true
           in: path
@@ -738,14 +944,14 @@ paths:
           description: Credit card statement status.
         '404':
           description: Credit card not found.
-      security: *ref_8
+      security: *ref_12
       summary: Get credit card statement payment status for a specific month
-      tags: *ref_9
+      tags: *ref_13
   /credit-cards/{id}/anticipations:
     post:
       operationId: createAnticipation
       parameters:
-        - *ref_7
+        - *ref_11
         - name: id
           required: true
           in: path
@@ -766,14 +972,14 @@ paths:
           description: Statement already closed or invalid input.
         '404':
           description: Credit card or account not found.
-      security: *ref_8
+      security: *ref_12
       summary: Create a credit card anticipation (advance payment toward the statement)
-      tags: *ref_9
+      tags: *ref_13
   /accounts:
     post:
       operationId: create
       parameters:
-        - &ref_10
+        - &ref_14
           name: x-api-key
           in: header
           required: false
@@ -794,15 +1000,15 @@ paths:
                 $ref: '#/components/schemas/AccountResponseDto'
         '400':
           description: Invalid input data
-      security: &ref_11
+      security: &ref_15
         - bearer: []
       summary: Create a new account
-      tags: &ref_12
+      tags: &ref_16
         - accounts
     get:
       operationId: findAll
       parameters:
-        - *ref_10
+        - *ref_14
       responses:
         '200':
           description: List of all accounts
@@ -812,14 +1018,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AccountResponseDto'
-      security: *ref_11
+      security: *ref_15
       summary: Get all accounts
-      tags: *ref_12
+      tags: *ref_16
   /accounts/{id}:
     get:
       operationId: findOne
       parameters:
-        - *ref_10
+        - *ref_14
         - name: id
           required: true
           in: path
@@ -834,13 +1040,13 @@ paths:
                 $ref: '#/components/schemas/AccountResponseDto'
         '404':
           description: Account not found
-      security: *ref_11
+      security: *ref_15
       summary: Get an account by ID
-      tags: *ref_12
+      tags: *ref_16
     patch:
       operationId: update
       parameters:
-        - *ref_10
+        - *ref_14
         - name: id
           required: true
           in: path
@@ -861,13 +1067,13 @@ paths:
                 $ref: '#/components/schemas/AccountResponseDto'
         '404':
           description: Account not found
-      security: *ref_11
+      security: *ref_15
       summary: Update an account
-      tags: *ref_12
+      tags: *ref_16
     delete:
       operationId: remove
       parameters:
-        - *ref_10
+        - *ref_14
         - name: id
           required: true
           in: path
@@ -880,14 +1086,14 @@ paths:
           description: Account not found
         '409':
           description: Cannot delete account with associated transactions
-      security: *ref_11
+      security: *ref_15
       summary: Delete an account
-      tags: *ref_12
+      tags: *ref_16
   /accounts/{id}/balance:
     get:
       operationId: getAccountBalance
       parameters:
-        - *ref_10
+        - *ref_14
         - name: id
           required: true
           in: path
@@ -902,14 +1108,14 @@ paths:
                 type: object
         '404':
           description: Account not found
-      security: *ref_11
+      security: *ref_15
       summary: Get the current balance for an account
-      tags: *ref_12
+      tags: *ref_16
   /settings:
     get:
       operationId: findAll
       parameters:
-        - &ref_13
+        - &ref_17
           name: x-api-key
           in: header
           required: false
@@ -924,15 +1130,15 @@ paths:
                 $ref: '#/components/schemas/SettingsResponseDto'
         '404':
           description: Settings not found
-      security: &ref_14
+      security: &ref_18
         - bearer: []
       summary: Get user settings
-      tags: &ref_15
+      tags: &ref_19
         - settings
     patch:
       operationId: update
       parameters:
-        - *ref_13
+        - *ref_17
       requestBody:
         required: true
         content:
@@ -950,22 +1156,32 @@ paths:
           description: Invalid input data
         '404':
           description: Settings not found
-      security: *ref_14
+      security: *ref_18
       summary: Update user settings
-      tags: *ref_15
-  /export:
+      tags: *ref_19
+  /data-transfer/export:
     get:
       operationId: export
-      parameters: []
+      parameters:
+        - &ref_20
+          name: x-api-key
+          in: header
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: ''
-      tags: &ref_16
-        - DataTransfer
-  /import:
+      security: &ref_21
+        - bearer: []
+      summary: Export all user data to JSON
+      tags: &ref_22
+        - data-transfer
+  /data-transfer/import:
     post:
       operationId: import
-      parameters: []
+      parameters:
+        - *ref_20
       requestBody:
         required: true
         content:
@@ -975,12 +1191,14 @@ paths:
       responses:
         '201':
           description: ''
-      tags: *ref_16
+      security: *ref_21
+      summary: Import data from JSON
+      tags: *ref_22
   /transfers:
     post:
       operationId: create
       parameters:
-        - &ref_17
+        - &ref_23
           name: x-api-key
           in: header
           required: false
@@ -1003,15 +1221,15 @@ paths:
           description: Invalid input
         '404':
           description: Account not found
-      security: &ref_18
+      security: &ref_24
         - bearer: []
       summary: Create a new transfer between accounts
-      tags: &ref_19
+      tags: &ref_25
         - transfers
     get:
       operationId: findAll
       parameters:
-        - *ref_17
+        - *ref_23
         - name: accountId
           required: false
           in: query
@@ -1048,14 +1266,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TransferResponseDto'
-      security: *ref_18
+      security: *ref_24
       summary: List transfers with optional filters
-      tags: *ref_19
+      tags: *ref_25
   /transfers/{id}:
     get:
       operationId: findOne
       parameters:
-        - *ref_17
+        - *ref_23
         - name: id
           required: true
           in: path
@@ -1070,13 +1288,13 @@ paths:
                 $ref: '#/components/schemas/TransferResponseDto'
         '404':
           description: Transfer not found
-      security: *ref_18
+      security: *ref_24
       summary: Get a transfer by ID
-      tags: *ref_19
+      tags: *ref_25
     patch:
       operationId: update
       parameters:
-        - *ref_17
+        - *ref_23
         - name: id
           required: true
           in: path
@@ -1097,13 +1315,13 @@ paths:
                 $ref: '#/components/schemas/TransferResponseDto'
         '404':
           description: Transfer not found
-      security: *ref_18
+      security: *ref_24
       summary: Update a transfer
-      tags: *ref_19
+      tags: *ref_25
     delete:
       operationId: remove
       parameters:
-        - *ref_17
+        - *ref_23
         - name: id
           required: true
           in: path
@@ -1114,152 +1332,9 @@ paths:
           description: Transfer deleted
         '404':
           description: Transfer not found
-      security: *ref_18
+      security: *ref_24
       summary: Delete a transfer
-      tags: *ref_19
-  /subscriptions:
-    post:
-      operationId: create
-      parameters:
-        - &ref_20
-          name: x-api-key
-          in: header
-          required: false
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSubscriptionDto'
-      responses:
-        '201':
-          description: Subscription created successfully.
-        '400':
-          description: Invalid input.
-        '404':
-          description: Credit card not found.
-      security: &ref_21
-        - bearer: []
-      summary: Create a new subscription
-      tags: &ref_22
-        - subscriptions
-    get:
-      operationId: findAll
-      parameters:
-        - *ref_20
-      responses:
-        '200':
-          description: List of subscriptions.
-      security: *ref_21
-      summary: Get all subscriptions
-      tags: *ref_22
-  /subscriptions/active:
-    get:
-      operationId: findActive
-      parameters:
-        - *ref_20
-      responses:
-        '200':
-          description: List of active subscriptions.
-      security: *ref_21
-      summary: Get all active subscriptions
-      tags: *ref_22
-  /subscriptions/{id}:
-    get:
-      operationId: findOne
-      parameters:
-        - *ref_20
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Subscription found.
-        '404':
-          description: Subscription not found.
-      security: *ref_21
-      summary: Get a subscription by ID
-      tags: *ref_22
-    patch:
-      operationId: update
-      parameters:
-        - *ref_20
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateSubscriptionDto'
-      responses:
-        '200':
-          description: Subscription updated successfully.
-        '404':
-          description: Subscription or credit card not found.
-      security: *ref_21
-      summary: Update a subscription
-      tags: *ref_22
-    delete:
-      operationId: remove
-      parameters:
-        - *ref_20
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Subscription deactivated successfully.
-        '404':
-          description: Subscription not found.
-      security: *ref_21
-      summary: Deactivate a subscription (soft delete)
-      tags: *ref_22
-  /subscriptions/{id}/permanent:
-    delete:
-      operationId: hardDelete
-      parameters:
-        - *ref_20
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Subscription deleted permanently.
-        '404':
-          description: Subscription not found.
-      security: *ref_21
-      summary: Permanently delete a subscription
-      tags: *ref_22
-  /subscriptions/{id}/reactivate:
-    patch:
-      operationId: reactivate
-      parameters:
-        - *ref_20
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Subscription reactivated successfully.
-        '404':
-          description: Subscription not found.
-      security: *ref_21
-      summary: Reactivate a deactivated subscription
-      tags: *ref_22
+      tags: *ref_25
   /api-keys:
     post:
       operationId: create
@@ -1277,10 +1352,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiKeyResponseDto'
-      security: &ref_23
+      security: &ref_26
         - bearer: []
       summary: Create a new API Key
-      tags: &ref_24
+      tags: &ref_27
         - api-keys
     get:
       operationId: findAll
@@ -1294,9 +1369,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ApiKeyResponseDto'
-      security: *ref_23
+      security: *ref_26
       summary: List your API Keys
-      tags: *ref_24
+      tags: *ref_27
   /api-keys/{id}:
     delete:
       operationId: revoke
@@ -1309,9 +1384,492 @@ paths:
       responses:
         '204':
           description: ''
-      security: *ref_23
+      security: *ref_26
       summary: Revoke an API Key
-      tags: *ref_24
+      tags: *ref_27
+  /admin/notifications/broadcast:
+    post:
+      description: >-
+        Sends a custom HTML email to all active users or selected user IDs.
+        Processes in background with a delay.
+      operationId: broadcast
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminBroadcastEmailDto'
+      responses:
+        '202':
+          description: Broadcast started successfully
+      security: &ref_28
+        - bearer: []
+      summary: Send a broadcast email to users (admin only)
+      tags: &ref_29
+        - Admin
+  /admin/notifications/preview:
+    post:
+      description: >-
+        Renders the email body with shortcodes, variables, and the base layout,
+        returning the full HTML.
+      operationId: previewEmail
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminPreviewEmailDto'
+      responses:
+        '200':
+          description: Rendered email HTML
+      security: *ref_28
+      summary: Preview a rendered email without sending (admin only)
+      tags: *ref_29
+  /admin/notifications/components:
+    get:
+      description: >-
+        Returns the catalog of shortcode components with syntax, params, and
+        preview HTML, plus available template variables.
+      operationId: getEmailComponents
+      parameters: []
+      responses:
+        '200':
+          description: Email component catalog
+      security: *ref_28
+      summary: List available email components and template variables (admin only)
+      tags: *ref_29
+  /admin/users:
+    get:
+      operationId: listUsers
+      parameters:
+        - name: page
+          required: false
+          in: query
+          schema:
+            default: 1
+            example: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          schema:
+            default: 20
+            example: 20
+            type: number
+      responses:
+        '200':
+          description: Paginated list of users
+      security: *ref_28
+      summary: List all users (admin only)
+      tags: *ref_29
+  /admin/users/{id}:
+    get:
+      operationId: getUserById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+        '404':
+          description: User not found
+      security: *ref_28
+      summary: Get user details (admin only)
+      tags: *ref_29
+    patch:
+      operationId: updateUser
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateUserDto'
+      responses:
+        '200':
+          description: Updated user
+        '404':
+          description: User not found
+        '409':
+          description: Email already in use
+      security: *ref_28
+      summary: Update user name, email or role (admin only)
+      tags: *ref_29
+  /admin/users/{id}/reset-password:
+    post:
+      operationId: resetPassword
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Temporary password generated
+        '400':
+          description: Cannot reset own password
+        '404':
+          description: User not found
+      security: *ref_28
+      summary: Reset user password (admin only)
+      tags: *ref_29
+  /admin/users/{id}/deactivate:
+    patch:
+      operationId: deactivateUser
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deactivated
+        '400':
+          description: Cannot deactivate self
+        '409':
+          description: Cannot deactivate last admin
+      security: *ref_28
+      summary: Deactivate a user (admin only)
+      tags: *ref_29
+  /admin/users/{id}/activate:
+    patch:
+      operationId: activateUser
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User activated
+        '404':
+          description: User not found
+      security: *ref_28
+      summary: Activate a user (admin only)
+      tags: *ref_29
+  /admin/stats:
+    get:
+      operationId: getOverviewStats
+      parameters:
+        - name: from
+          required: false
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            example: '2026-03-01'
+            type: string
+        - name: to
+          required: false
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            example: '2026-03-31'
+            type: string
+      responses:
+        '200':
+          description: System overview stats
+      security: *ref_28
+      summary: Get system overview statistics (admin only)
+      tags: *ref_29
+  /admin/stats/transactions:
+    get:
+      operationId: getTransactionStats
+      parameters:
+        - name: from
+          required: false
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            example: '2026-03-01'
+            type: string
+        - name: to
+          required: false
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            example: '2026-03-31'
+            type: string
+      responses:
+        '200':
+          description: Transaction stats
+        '400':
+          description: Invalid date range
+      security: *ref_28
+      summary: Get transaction statistics by date range (admin only)
+      tags: *ref_29
+  /admin/stats/chat:
+    get:
+      operationId: getChatStats
+      parameters: []
+      responses:
+        '200':
+          description: Chat usage statistics
+      security: *ref_28
+      summary: Get chat and token statistics (admin only)
+      tags: *ref_29
+  /admin/stats/audio:
+    get:
+      operationId: getAudioStats
+      parameters: []
+      responses:
+        '200':
+          description: Audio transcription usage statistics
+      security: *ref_28
+      summary: Get audio transcription statistics (admin only)
+      tags: *ref_29
+  /admin/ai-models:
+    get:
+      operationId: listAIModels
+      parameters: []
+      responses:
+        '200':
+          description: List of AI models
+      security: *ref_28
+      summary: List all AI models and their prices (admin only)
+      tags: *ref_29
+    post:
+      operationId: createAIModel
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAIModelDto'
+      responses:
+        '201':
+          description: AI model created
+        '409':
+          description: Model already exists
+      security: *ref_28
+      summary: Register a new AI model and its prices (admin only)
+      tags: *ref_29
+  /admin/ai-models/{name}:
+    patch:
+      operationId: updateAIModel
+      parameters:
+        - name: name
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAIModelDto'
+      responses:
+        '200':
+          description: AI model updated
+        '404':
+          description: Model not found
+      security: *ref_28
+      summary: Update AI model prices (admin only)
+      tags: *ref_29
+  /admin/transactions:
+    get:
+      description: >-
+        Returns a paginated list of transactions without exposing PII
+        (Personally Identifiable Information). Used to understand system trends
+        and volume.
+      operationId: getAnonymizedTransactions
+      parameters:
+        - name: page
+          required: false
+          in: query
+          schema:
+            default: 1
+            example: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          schema:
+            default: 20
+            example: 20
+            type: number
+        - name: type
+          required: false
+          in: query
+          description: Filter transactions by type
+          schema:
+            type: string
+            enum:
+              - INCOME
+              - EXPENSE
+        - name: from
+          required: false
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            example: '2026-03-01'
+            type: string
+        - name: to
+          required: false
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            example: '2026-03-31'
+            type: string
+        - name: paymentMethod
+          required: false
+          in: query
+          description: Filter transactions by payment method (CASH, PIX, CREDIT, DEBIT)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of anonymized transactions
+        '400':
+          description: Invalid date range
+      security: *ref_28
+      summary: List all transactions fully anonymized (admin only)
+      tags: *ref_29
+  /admin/settings:
+    get:
+      operationId: listAll
+      parameters: []
+      responses:
+        '200':
+          description: List of all system settings
+      security: &ref_30
+        - bearer: []
+      summary: List all system settings (admin only)
+      tags: &ref_31
+        - Admin / Settings
+  /admin/settings/{key}:
+    patch:
+      operationId: update
+      parameters:
+        - name: key
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSystemSettingDto'
+      responses:
+        '200':
+          description: Setting updated
+      security: *ref_30
+      summary: Update a system setting (admin only)
+      tags: *ref_31
+  /admin/invites:
+    post:
+      operationId: create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInviteDto'
+      responses:
+        '201':
+          description: Invitation created and email "sent"
+      security: &ref_32
+        - bearer: []
+      summary: Create a new invitation (admin only)
+      tags: &ref_33
+        - Admin / Invites
+    get:
+      operationId: listAll
+      parameters:
+        - name: page
+          required: false
+          in: query
+          schema:
+            default: 1
+            example: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          schema:
+            default: 20
+            example: 20
+            type: number
+      responses:
+        '200':
+          description: Paginated list of invitations
+      security: *ref_32
+      summary: List all invitations (admin only)
+      tags: *ref_33
+  /admin/invites/{id}/resend:
+    post:
+      operationId: resend
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invitation email resent
+        '404':
+          description: Invitation not found
+        '409':
+          description: Invitation cannot be resent
+      security: *ref_32
+      summary: Resend an invitation email (admin only)
+      tags: *ref_33
+  /admin/invites/{id}:
+    delete:
+      operationId: revoke
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invitation revoked
+        '404':
+          description: Invitation not found
+        '409':
+          description: Invitation cannot be revoked
+      security: *ref_32
+      summary: Revoke an invitation (admin only)
+      tags: *ref_33
+  /admin/invites/{id}/delete:
+    delete:
+      operationId: deleteRevoked
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invitation permanently deleted
+        '404':
+          description: Invitation not found
+        '409':
+          description: Invitation must be revoked before deletion
+      security: *ref_32
+      summary: Permanently delete a revoked invitation (admin only)
+      tags: *ref_33
 info:
   title: Quantix Personal Finance Manager API
   description: >-
@@ -1360,7 +1918,7 @@ info:
 
     Todos os endpoints da API são relativos a: `http://localhost:3000/api`
           
-  version: 0.4.2
+  version: 1.2.0
   contact:
     name: Quantix Support
     url: https://github.com/marcosnunesmbs/quantix
@@ -1377,40 +1935,67 @@ components:
       bearerFormat: JWT
       type: http
   schemas:
-    CreateCategoryDto:
+    CreateSubscriptionDto:
       type: object
       properties:
         name:
           type: string
-          description: Name of the category
-          example: Groceries
-        type:
+          description: Name of the subscription (e.g., Netflix, Spotify)
+          example: Netflix
+        amount:
+          type: number
+          description: Monthly amount charged
+          example: 55.9
+          minimum: 0.01
+        billingDay:
+          type: number
+          description: Day of the month when the subscription is charged (1-31)
+          example: 15
+          minimum: 1
+          maximum: 31
+        creditCardId:
           type: string
-          description: Type of the category
-          enum:
-            - INCOME
-            - EXPENSE
-          example: EXPENSE
-        color:
-          type: object
-          description: Color for the category in hexadecimal format
-          example: '#FF5733'
-          nullable: true
+          description: ID of the credit card used for this subscription
+          example: cc_123456789
+        categoryId:
+          type: string
+          description: ID of the expense category
+          example: cat_123456789
       required:
         - name
-        - type
-    UpdateCategoryDto:
+        - amount
+        - billingDay
+        - creditCardId
+    UpdateSubscriptionDto:
       type: object
       properties:
         name:
           type: string
-          description: Name of the category
-          example: Groceries
-        color:
-          type: object
-          description: Color for the category in hexadecimal format
-          example: '#FF5733'
-          nullable: true
+          description: Name of the subscription
+          example: Netflix Premium
+        amount:
+          type: number
+          description: Monthly amount charged
+          example: 79.9
+          minimum: 0.01
+        billingDay:
+          type: number
+          description: Day of the month when the subscription is charged (1-31)
+          example: 10
+          minimum: 1
+          maximum: 31
+        creditCardId:
+          type: string
+          description: ID of the credit card used for this subscription
+          example: cc_987654321
+        categoryId:
+          type: string
+          description: ID of the expense category
+          example: cat_123456789
+        active:
+          type: boolean
+          description: Whether the subscription is active
+          example: true
     RegisterDto:
       type: object
       properties:
@@ -1424,6 +2009,9 @@ components:
           type: string
           description: User password
           minLength: 6
+        inviteCode:
+          type: string
+          description: Invitation code (required if invite mode is ON)
       required:
         - name
         - email
@@ -1474,6 +2062,43 @@ components:
       required:
         - token
         - newPassword
+    SendMessageDto:
+      type: object
+      properties: {}
+    CreateCategoryDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the category
+          example: Groceries
+        type:
+          type: string
+          description: Type of the category
+          enum:
+            - INCOME
+            - EXPENSE
+          example: EXPENSE
+        color:
+          type: object
+          description: Color for the category in hexadecimal format
+          example: '#FF5733'
+          nullable: true
+      required:
+        - name
+        - type
+    UpdateCategoryDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the category
+          example: Groceries
+        color:
+          type: object
+          description: Color for the category in hexadecimal format
+          example: '#FF5733'
+          nullable: true
     RecurrenceDto:
       type: object
       properties:
@@ -1491,8 +2116,8 @@ components:
           example: 1
           minimum: 1
         startDate:
-          type: object
-          description: Start date for recurrence
+          type: string
+          description: Start date for recurrence (defaults to transaction date)
           example: '2026-01-30'
         endDate:
           type: string
@@ -1508,14 +2133,13 @@ components:
       required:
         - frequency
         - interval
-        - startDate
     CreateTransactionDto:
       type: object
       properties:
         type:
           type: string
           description: Type of the transaction
-          enum: &ref_25
+          enum: &ref_34
             - INCOME
             - EXPENSE
           example: EXPENSE
@@ -1541,7 +2165,7 @@ components:
         paymentMethod:
           type: string
           description: Method of payment
-          enum: &ref_26
+          enum: &ref_35
             - CASH
             - PIX
             - DEBIT
@@ -1779,7 +2403,7 @@ components:
         type:
           type: string
           description: Type of the transaction
-          enum: *ref_25
+          enum: *ref_34
           example: EXPENSE
         name:
           type: object
@@ -1803,7 +2427,7 @@ components:
         paymentMethod:
           type: string
           description: Method of payment
-          enum: *ref_26
+          enum: *ref_35
           example: CREDIT
         creditCardId:
           type: string
@@ -1971,7 +2595,7 @@ components:
         type:
           type: string
           description: Type of account
-          enum: &ref_27
+          enum: &ref_36
             - BANK_ACCOUNT
             - WALLET
             - SAVINGS_ACCOUNT
@@ -2042,7 +2666,7 @@ components:
         type:
           type: string
           description: Type of account
-          enum: *ref_27
+          enum: *ref_36
           example: BANK_ACCOUNT
         initialBalance:
           type: number
@@ -2181,67 +2805,6 @@ components:
           type: string
           description: Date of the transfer (YYYY-MM-DD)
           example: '2026-02-17'
-    CreateSubscriptionDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Name of the subscription (e.g., Netflix, Spotify)
-          example: Netflix
-        amount:
-          type: number
-          description: Monthly amount charged
-          example: 55.9
-          minimum: 0.01
-        billingDay:
-          type: number
-          description: Day of the month when the subscription is charged (1-31)
-          example: 15
-          minimum: 1
-          maximum: 31
-        creditCardId:
-          type: string
-          description: ID of the credit card used for this subscription
-          example: cc_123456789
-        categoryId:
-          type: string
-          description: ID of the expense category
-          example: cat_123456789
-      required:
-        - name
-        - amount
-        - billingDay
-        - creditCardId
-    UpdateSubscriptionDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Name of the subscription
-          example: Netflix Premium
-        amount:
-          type: number
-          description: Monthly amount charged
-          example: 79.9
-          minimum: 0.01
-        billingDay:
-          type: number
-          description: Day of the month when the subscription is charged (1-31)
-          example: 10
-          minimum: 1
-          maximum: 31
-        creditCardId:
-          type: string
-          description: ID of the credit card used for this subscription
-          example: cc_987654321
-        categoryId:
-          type: string
-          description: ID of the expense category
-          example: cat_123456789
-        active:
-          type: boolean
-          description: Whether the subscription is active
-          example: true
     CreateApiKeyDto:
       type: object
       properties:
@@ -2275,5 +2838,132 @@ components:
         - keyPrefix
         - isActive
         - createdAt
+    AdminBroadcastEmailDto:
+      type: object
+      properties:
+        body:
+          type: string
+          description: The HTML body of the email. Can include placeholders like {{name}}
+          example: <h1>Olá {{name}}</h1><p>Esta é uma mensagem importante.</p>
+        subject:
+          type: string
+          description: The subject line of the email
+          example: Comunicado Importante
+        sendToAll:
+          type: boolean
+          description: Whether to send to all active users
+          default: false
+        userIds:
+          description: Specific user IDs to send to (ignored if sendToAll is true)
+          type: array
+          items:
+            type: string
+      required:
+        - body
+        - subject
+        - sendToAll
+    AdminPreviewEmailDto:
+      type: object
+      properties:
+        body:
+          type: string
+          description: >-
+            The HTML body of the email. Supports shortcodes like
+            {{button:Label|url}} and variables like {{name}}
+          example: >-
+            <h2>Olá {{name}}</h2><p>Novidades!</p>{{button:Ver
+            mais|https://quantix.app}}
+        context:
+          type: object
+          description: Optional context to override default preview variable values
+          example:
+            name: João Silva
+      required:
+        - body
+    AdminUpdateUserDto:
+      type: object
+      properties:
+        name:
+          type: string
+          example: New Name
+        email:
+          type: string
+          example: new@email.com
+        role:
+          type: string
+          enum:
+            - USER
+            - ADMIN
+          example: ADMIN
+    CreateAIModelDto:
+      type: object
+      properties:
+        name:
+          type: string
+          example: anthropic/claude-3.5-sonnet
+        inputPricePerMillion:
+          type: number
+          example: 3
+        outputPricePerMillion:
+          type: number
+          example: 15
+        provider:
+          type: string
+          example: Anthropic
+        currency:
+          type: string
+          example: USD
+          default: USD
+      required:
+        - name
+        - inputPricePerMillion
+        - outputPricePerMillion
+        - provider
+        - currency
+    UpdateAIModelDto:
+      type: object
+      properties:
+        name:
+          type: string
+          example: anthropic/claude-3.5-sonnet
+        inputPricePerMillion:
+          type: number
+          example: 3
+        outputPricePerMillion:
+          type: number
+          example: 15
+        provider:
+          type: string
+          example: Anthropic
+        currency:
+          type: string
+          example: USD
+          default: USD
+    UpdateSystemSettingDto:
+      type: object
+      properties:
+        value:
+          type: string
+          description: Value for the setting
+          example: 'true'
+        type:
+          type: string
+          description: Type of the setting value
+          enum:
+            - boolean
+            - numeric
+            - string
+          example: boolean
+      required:
+        - value
+    CreateInviteDto:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email to invite
+          example: guest@example.com
+      required:
+        - email
 security:
   - bearer: []

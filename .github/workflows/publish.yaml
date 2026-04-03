@@ -25,4 +25,5 @@ jobs:
 # npm version 1.0.0
 
 # 2. Envia o commit e a nova tag para o GitHub
-# git push origin main --tags
+# git tag v1.0.0
+# git push origin v1.0.0
