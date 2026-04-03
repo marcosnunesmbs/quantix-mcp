@@ -492,10 +492,10 @@ paths:
         '201':
           description: Transaction created successfully.
         '400':
-          description: Invalid input.
+          description: Invalid input. Use POST /transactions/credit for credit card transactions.
       security: &ref_9
         - bearer: []
-      summary: Create a new transaction
+      summary: Create a new transaction (CASH, PIX, or DEBIT only)
       tags: &ref_10
         - transactions
     get:
@@ -633,7 +633,7 @@ paths:
         '404':
           description: Transaction not found.
       security: *ref_9
-      summary: Update a transaction
+      summary: Update a transaction (CASH, PIX, or DEBIT only)
       tags: *ref_10
     delete:
       operationId: remove
@@ -708,6 +708,60 @@ paths:
           description: Transaction not found.
       security: *ref_9
       summary: Mark a transaction as unpaid
+      tags: *ref_10
+  /transactions/credit:
+    post:
+      operationId: createCreditCard
+      parameters:
+        - &ref_8
+          name: x-api-key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCreditCardTransactionDto'
+      responses:
+        '201':
+          description: Credit card transaction created successfully.
+        '400':
+          description: Invalid input.
+      security: *ref_9
+      summary: Create a new credit card transaction
+      description: Creates a credit card transaction. The due date is automatically calculated based on the purchase date and the card closing day. Use targetDueMonth to specify a particular billing month.
+      tags: *ref_10
+  /transactions/credit/{id}:
+    patch:
+      operationId: updateCreditCard
+      parameters:
+        - *ref_8
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCreditCardTransactionDto'
+      responses:
+        '200':
+          description: Credit card transaction updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionWithRelationsDto'
+        '404':
+          description: Transaction not found.
+      security: *ref_9
+      summary: Update a credit card transaction
+      description: Updates a credit card transaction. If purchaseDate or targetDueMonth is changed, the due date is recalculated.
       tags: *ref_10
   /summary:
     get:
@@ -1918,7 +1972,7 @@ info:
 
     Todos os endpoints da API são relativos a: `http://localhost:3000/api`
           
-  version: 1.2.0
+  version: 1.2.5
   contact:
     name: Quantix Support
     url: https://github.com/marcosnunesmbs/quantix
@@ -2144,19 +2198,17 @@ components:
             - EXPENSE
           example: EXPENSE
         name:
-          type: object
+          type: string
           description: Name or description of the transaction
           example: Grocery shopping
         amount:
-          type: object
+          type: number
           description: Amount of the transaction
           example: 125.75
           minimum: 0
         date:
-          type: object
-          description: >-
-            Date of the transaction (for credit cards, this will be overridden
-            by the due day of the card if targetDueMonth is provided)
+          type: string
+          description: Date of the transaction
           example: '2026-01-30'
         categoryId:
           type: string
@@ -2164,28 +2216,21 @@ components:
           example: cat_123456789
         paymentMethod:
           type: string
-          description: Method of payment
+          description: Method of payment (CASH, PIX, or DEBIT only)
           enum: &ref_35
             - CASH
             - PIX
             - DEBIT
-            - CREDIT
-          example: CREDIT
-        creditCardId:
-          type: string
-          description: >-
-            ID of the associated credit card (required if paymentMethod is
-            CREDIT)
-          example: cc_123456789
+          example: CASH
         installments:
           type: number
           description: Number of installments (optional)
           example: 3
           minimum: 1
-        targetDueMonth:
+        accountId:
           type: string
-          description: Target month for due date in YYYY-MM format (optional)
-          example: 2026-03
+          description: ID of the associated account (required for direct payments)
+          example: acc_123456789
         isRecurring:
           type: boolean
           description: Whether the transaction is recurring
@@ -2195,26 +2240,18 @@ components:
           description: Recurrence information (optional)
           allOf:
             - $ref: '#/components/schemas/RecurrenceDto'
-        accountId:
-          type: string
-          description: >-
-            ID of the associated account (required if paymentMethod is not
-            CREDIT)
-          example: acc_123456789
         isPaid:
           type: boolean
           description: Whether the transaction has been paid
           example: false
           default: false
-        purchaseDate:
-          type: string
-          description: Actual purchase date (credit card only)
-          example: '2026-02-10'
       required:
         - type
         - name
         - amount
         - date
+        - paymentMethod
+        - accountId
     CategoryDto:
       type: object
       properties:
@@ -2406,19 +2443,17 @@ components:
           enum: *ref_34
           example: EXPENSE
         name:
-          type: object
+          type: string
           description: Name or description of the transaction
           example: Grocery shopping
         amount:
-          type: object
+          type: number
           description: Amount of the transaction
           example: 125.75
           minimum: 0
         date:
-          type: object
-          description: >-
-            Date of the transaction (for credit cards, this will be overridden
-            by the due day of the card if targetDueMonth is provided)
+          type: string
+          description: Date of the transaction
           example: '2026-01-30'
         categoryId:
           type: string
@@ -2426,15 +2461,9 @@ components:
           example: cat_123456789
         paymentMethod:
           type: string
-          description: Method of payment
+          description: Method of payment (CASH, PIX, or DEBIT only)
           enum: *ref_35
-          example: CREDIT
-        creditCardId:
-          type: string
-          description: >-
-            ID of the associated credit card (required if paymentMethod is
-            CREDIT)
-          example: cc_123456789
+          example: CASH
         installments:
           type: number
           description: Number of installments (optional)
@@ -2442,11 +2471,9 @@ components:
           minimum: 1
         targetDueMonth:
           type: string
-          description: >-
-            Target month for due date in YYYY-MM format (optional). When
-            provided for CREDIT payments, the transaction date will be set to
-            the credit card's due day in the specified month.
+          description: Target month for due date in YYYY-MM format.
           example: 2026-03
+          pattern: '^\d{4}-\d{2}$'
         isRecurring:
           type: boolean
           description: Whether the transaction is recurring
@@ -2458,19 +2485,150 @@ components:
             - $ref: '#/components/schemas/RecurrenceDto'
         accountId:
           type: string
-          description: >-
-            ID of the associated account (required if paymentMethod is not
-            CREDIT)
+          description: ID of the associated account
           example: acc_123456789
         isPaid:
           type: boolean
           description: Whether the transaction has been paid
           example: false
           default: false
+    CreditCardRecurrenceDto:
+      type: object
+      properties:
+        frequency:
+          type: string
+          description: Frequency of recurrence
+          enum:
+            - WEEKLY
+            - BIWEEKLY
+            - MONTHLY
+            - BIMONTHLY
+            - QUARTERLY
+            - SEMIANNUALLY
+            - ANNUALLY
+          example: MONTHLY
+        interval:
+          type: number
+          description: Interval between recurrences
+          example: 1
+          minimum: 1
+          default: 1
+        startDate:
+          type: string
+          description: Start date for recurrence (defaults to purchase date)
+          example: '2026-01-30'
+        endDate:
+          type: string
+          description: End date for recurrence (optional)
+          example: '2026-12-31'
+        occurrences:
+          type: number
+          description: Number of occurrences (optional)
+          example: 12
+          minimum: 2
+      required:
+        - frequency
+        - interval
+    CreateCreditCardTransactionDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name or description of the transaction
+          example: Eletrônicos na loja X
+        amount:
+          type: number
+          description: Amount of the transaction (total for installments)
+          example: 1250
+          minimum: 0
         purchaseDate:
           type: string
-          description: Actual purchase date (credit card only)
+          description: Actual purchase date (the day you bought the item)
           example: '2026-02-10'
+        creditCardId:
+          type: string
+          description: ID of the credit card to charge
+          example: cc_123456789
+        categoryId:
+          type: string
+          description: ID of the associated category
+          example: cat_123456789
+        installments:
+          type: number
+          description: Number of installments (optional)
+          example: 3
+          minimum: 1
+        targetDueMonth:
+          type: string
+          description: Target month for due date in YYYY-MM format
+          example: '2026-03'
+        isRecurring:
+          type: boolean
+          description: Whether the transaction is recurring
+          example: false
+          default: false
+        recurrence:
+          description: Recurrence information (optional)
+          allOf:
+            - $ref: '#/components/schemas/CreditCardRecurrenceDto'
+        isPaid:
+          type: boolean
+          description: Whether the transaction has been paid
+          example: false
+          default: false
+      required:
+        - name
+        - amount
+        - purchaseDate
+        - creditCardId
+    UpdateCreditCardTransactionDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name or description of the transaction
+          example: Eletrônicos na loja X
+        amount:
+          type: number
+          description: Amount of the transaction
+          example: 1250
+          minimum: 0
+        purchaseDate:
+          type: string
+          description: Actual purchase date
+          example: '2026-02-10'
+        creditCardId:
+          type: string
+          description: ID of the credit card
+          example: cc_123456789
+        categoryId:
+          type: string
+          description: ID of the associated category
+          example: cat_123456789
+        installments:
+          type: number
+          description: Number of installments
+          example: 3
+          minimum: 1
+        targetDueMonth:
+          type: string
+          description: Target month for due date in YYYY-MM format
+          example: '2026-03'
+          pattern: '^\d{4}-\d{2}$'
+        isRecurring:
+          type: boolean
+          description: Whether the transaction is recurring
+          example: false
+          default: false
+        recurrence:
+          description: Recurrence information (optional)
+          allOf:
+            - $ref: '#/components/schemas/CreditCardRecurrenceDto'
+        isPaid:
+          type: boolean
+          description: Whether the transaction has been paid
+          example: false
+          default: false
     CreateCreditCardDto:
       type: object
       properties:
