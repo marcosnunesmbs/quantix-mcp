@@ -158,11 +158,9 @@ export const CreateTransactionInput = z.object({
   amount: z.number().nonnegative().describe("Transaction amount (required — must ask the user if not provided, do not assume or default)"),
   date: z.string().describe("ISO date string YYYY-MM-DD"),
   categoryId: z.string().describe("ID da categoria associada (use a ferramenta get_categories para encontrar o ID correto)").optional(),
-  paymentMethod: z.enum(["CASH", "PIX", "DEBIT", "CREDIT"]).optional(),
-  creditCardId: z.string().describe("ID do cartão de crédito (obrigatório se o método de pagamento for CREDIT; use get_credit_cards para encontrar o ID)").optional(),
-  accountId: z.string().describe("ID da conta bancária (obrigatório se o método de pagamento NÃO for CREDIT; use get_accounts para encontrar o ID)").optional(),
+  paymentMethod: z.enum(["CASH", "PIX", "DEBIT"]).describe("Método de pagamento direto (CASH, PIX ou DEBIT — para cartão de crédito, use create_credit_transaction)").optional(),
+  accountId: z.string().describe("ID da conta bancária (use get_accounts para encontrar o ID)").optional(),
   installments: z.number().int().min(1).optional(),
-  targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
   isPaid: z.boolean().describe("Indica se a transação já foi paga ou recebida (use este campo em vez de 'paid')").optional(),
   recurrence: z.object({
     frequency: z.enum(["MONTHLY", "WEEKLY", "YEARLY"]),
@@ -178,21 +176,53 @@ export const UpdateTransactionInput = z.object({
   type: z.enum(["INCOME", "EXPENSE"]).optional(),
   name: z.string().optional(),
   amount: z.number().nonnegative().optional(),
-  date: z.string().describe("ISO date string YYYY-MM-DD").optional().describe("Date of the transaction (if CREDIT paymentMethod, this represents the due date of credit card statement)"),
+  date: z.string().describe("ISO date string YYYY-MM-DD").optional(),
   categoryId: z.string().describe("ID da categoria associada (use a ferramenta get_categories para encontrar o ID correto)").optional(),
-  paymentMethod: z.enum(["CASH", "PIX", "DEBIT", "CREDIT"]).optional(),
-  creditCardId: z.string().describe("ID do cartão de crédito (obrigatório se o método de pagamento for CREDIT; use get_credit_cards para encontrar o ID)").optional(),
-  accountId: z.string().describe("ID da conta bancária (obrigatório se o método de pagamento NÃO for CREDIT; use get_accounts para encontrar o ID)").optional(),
+  paymentMethod: z.enum(["CASH", "PIX", "DEBIT"]).describe("Método de pagamento direto (CASH, PIX ou DEBIT — para cartão de crédito, use update_credit_transaction)").optional(),
+  accountId: z.string().describe("ID da conta bancária (use get_accounts para encontrar o ID)").optional(),
   installments: z.number().int().min(1).optional(),
-  targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
   isPaid: z.boolean().optional(),
-  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Purchase date (CREDIT paymentMethod only), YYYY-MM-DD").optional(),
   recurrence: z.object({
     frequency: z.enum(["MONTHLY", "WEEKLY", "YEARLY"]).optional(),
     interval: z.number().int().min(1).optional(),
     endDate: z.string().optional(),
     occurrences: z.number().int().min(2).describe("Number of occurrences (mutually exclusive with endDate)").optional()
   }).optional()
+});
+
+// --- Credit Card Transaction Tool Inputs ---
+
+export const CreditCardRecurrenceSchema = z.object({
+  frequency: z.enum(["WEEKLY", "BIWEEKLY", "MONTHLY", "BIMONTHLY", "QUARTERLY", "SEMIANNUALLY", "ANNUALLY"]),
+  interval: z.number().int().min(1).default(1).optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Start date for recurrence (defaults to purchase date)").optional(),
+  endDate: z.string().optional(),
+  occurrences: z.number().int().min(2).describe("Number of occurrences (optional)").optional()
+});
+
+export const CreateCreditCardTransactionInput = z.object({
+  name: z.string().describe("Name or description of the transaction"),
+  amount: z.number().min(0).describe("Total amount of the transaction (required — must ask the user if not provided, do not assume or default)"),
+  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Purchase date in YYYY-MM-DD format").describe("Actual purchase date (the day you bought the item)"),
+  creditCardId: z.string().describe("ID of the credit card to charge (use get_credit_cards to find the ID)"),
+  categoryId: z.string().describe("ID of the associated category (use get_categories to find the ID)").optional(),
+  installments: z.number().int().min(1).describe("Number of installments (optional)").optional(),
+  targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/, "Target month in YYYY-MM format").describe("Target month for due date (optional)").optional(),
+  isPaid: z.boolean().describe("Whether the transaction has been paid").optional(),
+  recurrence: CreditCardRecurrenceSchema.optional()
+});
+
+export const UpdateCreditCardTransactionInput = z.object({
+  id: z.string().describe("Credit card transaction ID"),
+  name: z.string().describe("Name or description of the transaction").optional(),
+  amount: z.number().min(0).describe("Total amount of the transaction").optional(),
+  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Purchase date in YYYY-MM-DD format").describe("Actual purchase date").optional(),
+  creditCardId: z.string().describe("ID of the credit card").optional(),
+  categoryId: z.string().describe("ID of the associated category").optional(),
+  installments: z.number().int().min(1).describe("Number of installments").optional(),
+  targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/, "Target month in YYYY-MM format").describe("Target month for due date").optional(),
+  isPaid: z.boolean().optional(),
+  recurrence: CreditCardRecurrenceSchema.optional()
 });
 
 export const CreateAccountInput = z.object({

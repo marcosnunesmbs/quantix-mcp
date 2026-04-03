@@ -1,6 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { CreateTransactionInput, GetTransactionsInput, UpdateTransactionInput } from '../types/schemas.js';
+import {
+  CreateTransactionInput,
+  GetTransactionsInput,
+  UpdateTransactionInput,
+  CreateCreditCardTransactionInput,
+  UpdateCreditCardTransactionInput
+} from '../types/schemas.js';
 import { apiClient } from '../services/apiClient.js';
 import { handleToolError } from '../utils/toolHelpers.js';
 
@@ -9,7 +15,7 @@ export function registerTransactionTools(server: McpServer) {
     'create_transaction',
     {
       title: 'Create Transaction',
-      description: 'Record a new income or expense (DEBIT|CREDIT|PIX|CASH)',
+      description: 'Record a new income or expense using direct payment methods (CASH, PIX, or DEBIT only). For credit card purchases, use create_credit_transaction instead.',
       inputSchema: CreateTransactionInput
     },
     async (args) => {
@@ -77,7 +83,7 @@ export function registerTransactionTools(server: McpServer) {
     'update_transaction',
     {
       title: 'Update Transaction',
-      description: 'Update a transaction',
+      description: 'Update a transaction using direct payment methods (CASH, PIX, or DEBIT only). For credit card transactions, use update_credit_transaction instead.',
       inputSchema: UpdateTransactionInput
     },
     async ({ id, mode, ...data }) => {
@@ -147,6 +153,44 @@ export function registerTransactionTools(server: McpServer) {
         await apiClient.delete(url);
         return {
           content: [{ type: 'text', text: `Transaction ${id} deleted.` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'create_credit_transaction',
+    {
+      title: 'Create Credit Card Transaction',
+      description: 'Record a new credit card purchase. The due date is automatically calculated based on the purchase date and the card closing day. Use targetDueMonth to specify a particular billing month.',
+      inputSchema: CreateCreditCardTransactionInput
+    },
+    async (args) => {
+      try {
+        const transaction = await apiClient.post('/transactions/credit', args);
+        return {
+          content: [{ type: 'text', text: `Credit card transaction created: ${JSON.stringify(transaction, null, 2)}` }]
+        };
+      } catch (error) {
+        return handleToolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'update_credit_transaction',
+    {
+      title: 'Update Credit Card Transaction',
+      description: 'Update a credit card transaction. If purchaseDate or targetDueMonth is changed, the due date is recalculated.',
+      inputSchema: UpdateCreditCardTransactionInput
+    },
+    async ({ id, ...data }) => {
+      try {
+        const transaction = await apiClient.patch(`/transactions/credit/${id}`, data);
+        return {
+          content: [{ type: 'text', text: `Credit card transaction updated: ${JSON.stringify(transaction, null, 2)}` }]
         };
       } catch (error) {
         return handleToolError(error);
