@@ -163,7 +163,6 @@ export const CreateTransactionInput = z.object({
   accountId: z.string().describe("ID da conta bancária (obrigatório se o método de pagamento NÃO for CREDIT; use get_accounts para encontrar o ID)").optional(),
   installments: z.number().int().min(1).optional(),
   targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
-  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Actual purchase date (CREDIT paymentMethod only), YYYY-MM-DD").optional(),
   isPaid: z.boolean().describe("Indica se a transação já foi paga ou recebida (use este campo em vez de 'paid')").optional(),
   recurrence: z.object({
     frequency: z.enum(["MONTHLY", "WEEKLY", "YEARLY"]),
@@ -179,7 +178,7 @@ export const UpdateTransactionInput = z.object({
   type: z.enum(["INCOME", "EXPENSE"]).optional(),
   name: z.string().optional(),
   amount: z.number().nonnegative().optional(),
-  date: z.string().describe("ISO date string YYYY-MM-DD").optional(),
+  date: z.string().describe("ISO date string YYYY-MM-DD").optional().describe("Date of the transaction (if CREDIT paymentMethod, this represents the due date of credit card statement)"),
   categoryId: z.string().describe("ID da categoria associada (use a ferramenta get_categories para encontrar o ID correto)").optional(),
   paymentMethod: z.enum(["CASH", "PIX", "DEBIT", "CREDIT"]).optional(),
   creditCardId: z.string().describe("ID do cartão de crédito (obrigatório se o método de pagamento for CREDIT; use get_credit_cards para encontrar o ID)").optional(),
@@ -187,7 +186,7 @@ export const UpdateTransactionInput = z.object({
   installments: z.number().int().min(1).optional(),
   targetDueMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
   isPaid: z.boolean().optional(),
-  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Actual purchase date (CREDIT paymentMethod only), YYYY-MM-DD").optional(),
+  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Purchase date (CREDIT paymentMethod only), YYYY-MM-DD").optional(),
   recurrence: z.object({
     frequency: z.enum(["MONTHLY", "WEEKLY", "YEARLY"]).optional(),
     interval: z.number().int().min(1).optional(),

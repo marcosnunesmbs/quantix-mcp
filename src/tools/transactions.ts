@@ -9,7 +9,7 @@ export function registerTransactionTools(server: McpServer) {
     'create_transaction',
     {
       title: 'Create Transaction',
-      description: 'Record a new income or expense',
+      description: 'Record a new income or expense (DEBIT|CREDIT|PIX|CASH)',
       inputSchema: CreateTransactionInput
     },
     async (args) => {
