@@ -2,8 +2,8 @@ services:
   quantix-mcp:
     build: .
     ports:
-      - "3001:3001"
+      - "${MCPPORT:-3001}:${MCPPORT:-3001}"
     environment:
       TRANSPORT: http
-      MCPPORT: 3001
+      MCPPORT: ${MCPPORT:-3001}
     restart: unless-stopped
