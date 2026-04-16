@@ -1,4 +1,5 @@
 import { config } from '../config.js';
+import { getRequestApiKey } from './requestContext.js';
 
 export class ApiClientError extends Error {
   constructor(public message: string, public status: number, public statusText: string) {
@@ -10,9 +11,14 @@ export class ApiClientError extends Error {
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${config.QUANTIX_API_URL}${endpoint}`;
   
+  const apiKey = getRequestApiKey() ?? config.QUANTIX_API_KEY;
+  if (!apiKey) {
+    throw new ApiClientError('No API key provided. Pass x-api-key header.', 401, 'Unauthorized');
+  }
+
   const headers = {
     'Content-Type': 'application/json',
-    'x-api-key': config.QUANTIX_API_KEY,
+    'x-api-key': apiKey,
     ...options.headers,
   };
 

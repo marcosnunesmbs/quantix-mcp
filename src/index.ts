@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import express, { type Request, type Response } from 'express';
 import { config } from './config.js';
+import { requestContext } from './services/requestContext.js';
 import { registerCategoryTools } from './tools/categories.js';
 import { registerCreditCardTools } from './tools/credit-cards.js';
 import { registerTransactionTools } from './tools/transactions.js';
@@ -59,11 +60,19 @@ async function startHttp() {
     const port = parseInt(config.MCPPORT, 10);
 
     app.post('/mcp', async (req: Request, res: Response) => {
-        const transport = new StreamableHTTPServerTransport({});
-        const mcpServer = getServer();
-        // Cast needed: exactOptionalPropertyTypes causes onclose incompatibility with Transport interface
-        await mcpServer.connect(transport as never);
-        await transport.handleRequest(req, res, req.body);
+        const apiKey = req.headers['x-api-key'];
+        if (!apiKey || typeof apiKey !== 'string') {
+            res.status(401).json({ error: 'Missing x-api-key header' });
+            return;
+        }
+
+        await requestContext.run({ apiKey }, async () => {
+            const transport = new StreamableHTTPServerTransport({});
+            const mcpServer = getServer();
+            // Cast needed: exactOptionalPropertyTypes causes onclose incompatibility with Transport interface
+            await mcpServer.connect(transport as never);
+            await transport.handleRequest(req, res, req.body);
+        });
     });
 
     app.get('/health', (_req: Request, res: Response) => {
