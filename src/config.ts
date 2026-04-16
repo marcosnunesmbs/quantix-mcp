@@ -31,7 +31,7 @@ if (!parsedEnv.success) {
 }
 
 export const config = parsedEnv.success ? parsedEnv.data : {
-    QUANTIX_API_URL: process.env.QUANTIX_API_URL || 'https://api.quantix.example.com',
+    QUANTIX_API_URL: process.env.QUANTIX_API_URL || 'https://api.quantix.mmunens.xyz',
     QUANTIX_API_KEY: process.env.QUANTIX_API_KEY,
     MCPPORT: process.env.MCPPORT || '3001',
     NODE_ENV: (process.env.NODE_ENV as 'development' | 'production' | 'test') || 'development',
