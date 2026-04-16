@@ -1,0 +1,11 @@
+services:
+  quantix-mcp:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      TRANSPORT: http
+      MCPPORT: 3001
+      QUANTIX_API_URL: ${QUANTIX_API_URL:-https://api.quantix.example.com}
+      QUANTIX_API_KEY: ${QUANTIX_API_KEY}
+    restart: unless-stopped

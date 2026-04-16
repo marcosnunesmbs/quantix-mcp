@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import express, { type Request, type Response } from 'express';
 import { config } from './config.js';
-import { z } from 'zod';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerCategoryTools } from './tools/categories.js';
 import { registerCreditCardTools } from './tools/credit-cards.js';
 import { registerTransactionTools } from './tools/transactions.js';
@@ -47,11 +45,42 @@ export function getServer() {
     return mcpServer;
 }
 
-async function main() {
+async function startStdio() {
     const transport = new StdioServerTransport();
     const mcpServer = getServer();
     await mcpServer.connect(transport);
-    console.log('Quantix MCP server is running...');
+    console.error('Quantix MCP server running in stdio mode');
+}
+
+async function startHttp() {
+    const app = express();
+    app.use(express.json());
+
+    const port = parseInt(config.MCPPORT, 10);
+
+    app.post('/mcp', async (req: Request, res: Response) => {
+        const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+        const mcpServer = getServer();
+        await mcpServer.connect(transport);
+        await transport.handleRequest(req, res, req.body);
+    });
+
+    app.get('/health', (_req: Request, res: Response) => {
+        res.json({ status: 'ok', transport: 'http' });
+    });
+
+    app.listen(port, () => {
+        console.error(`Quantix MCP server running in HTTP mode on port ${port}`);
+        console.error(`Endpoint: http://0.0.0.0:${port}/mcp`);
+    });
+}
+
+async function main() {
+    if (config.TRANSPORT === 'http') {
+        await startHttp();
+    } else {
+        await startStdio();
+    }
 }
 
 main().catch(error => {

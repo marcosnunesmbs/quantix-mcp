@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npm test)",
-      "Bash(cd /e/quantix-mcp && npm run build 2>&1)"
+      "Bash(cd /e/quantix-mcp && npm run build 2>&1)",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute"
     ]
   }
 }
