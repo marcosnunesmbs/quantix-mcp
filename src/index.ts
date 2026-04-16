@@ -59,9 +59,10 @@ async function startHttp() {
     const port = parseInt(config.MCPPORT, 10);
 
     app.post('/mcp', async (req: Request, res: Response) => {
-        const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+        const transport = new StreamableHTTPServerTransport({});
         const mcpServer = getServer();
-        await mcpServer.connect(transport);
+        // Cast needed: exactOptionalPropertyTypes causes onclose incompatibility with Transport interface
+        await mcpServer.connect(transport as never);
         await transport.handleRequest(req, res, req.body);
     });
 
