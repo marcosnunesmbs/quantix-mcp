@@ -25,6 +25,6 @@ ENV TRANSPORT=http
 ENV MCPPORT=3001
 ENV NODE_ENV=production
 
-EXPOSE 3001
+EXPOSE ${MCPPORT}
 
 CMD ["node", "dist/index.js"]
