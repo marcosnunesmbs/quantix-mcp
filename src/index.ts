@@ -59,7 +59,7 @@ async function startHttp() {
 
     const port = parseInt(config.MCPPORT, 10);
 
-    app.post('/mcp', async (req: Request, res: Response) => {
+    const mcpHandler = async (req: Request, res: Response) => {
         const apiKey = req.headers['x-api-key'];
         if (!apiKey || typeof apiKey !== 'string') {
             res.status(401).json({ error: 'Missing x-api-key header' });
@@ -73,7 +73,12 @@ async function startHttp() {
             await mcpServer.connect(transport as never);
             await transport.handleRequest(req, res, req.body);
         });
-    });
+    };
+
+    // Handle GET (SSE stream), POST (JSON-RPC) and DELETE (session termination)
+    app.get('/mcp', mcpHandler);
+    app.post('/mcp', mcpHandler);
+    app.delete('/mcp', mcpHandler);
 
     app.get('/health', (_req: Request, res: Response) => {
         res.json({ status: 'ok', transport: 'http' });
