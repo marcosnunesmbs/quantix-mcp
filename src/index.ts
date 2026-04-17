@@ -59,10 +59,22 @@ async function startHttp() {
 
     const port = parseInt(config.MCPPORT, 10);
 
+    const extractApiKey = (req: Request): string | undefined => {
+        const authHeader = req.headers['authorization'];
+        if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+            return authHeader.slice(7);
+        }
+        const apiKeyHeader = req.headers['x-api-key'] ?? req.headers['api-key'];
+        if (typeof apiKeyHeader === 'string') {
+            return apiKeyHeader;
+        }
+        return undefined;
+    };
+
     const mcpHandler = async (req: Request, res: Response) => {
-        const apiKey = req.headers['api-key'];
-        if (!apiKey || typeof apiKey !== 'string') {
-            res.status(401).json({ error: 'Missing api-key header' });
+        const apiKey = extractApiKey(req);
+        if (!apiKey) {
+            res.status(401).json({ error: 'Missing authentication. Use Authorization: Bearer <key>, x-api-key, or api-key header.' });
             return;
         }
 
