@@ -60,9 +60,9 @@ async function startHttp() {
     const port = parseInt(config.MCPPORT, 10);
 
     const mcpHandler = async (req: Request, res: Response) => {
-        const apiKey = req.headers['x-api-key'];
+        const apiKey = req.headers['api-key'];
         if (!apiKey || typeof apiKey !== 'string') {
-            res.status(401).json({ error: 'Missing x-api-key header' });
+            res.status(401).json({ error: 'Missing api-key header' });
             return;
         }
 
